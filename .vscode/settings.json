@@ -1,0 +1,11 @@
+{
+    "cSpell.words": [
+        "biolens"
+    ],
+    "dart.flutterRunAdditionalArgs": [
+        "--no-sound-null-safety"
+    ],
+    "dart.vmAdditionalArgs": [
+        "--no-sound-null-safety"
+    ]
+}

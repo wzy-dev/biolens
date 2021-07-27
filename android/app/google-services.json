@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "823940242544",
+    "project_id": "biolens-ef25c",
+    "storage_bucket": "biolens-ef25c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823940242544:android:b2befc903ff51874a828b5",
+        "android_client_info": {
+          "package_name": "com.polymathe.biolens"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "823940242544-ghg76se1t3svp7729qaduvb14k89olb8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0G7NwXmDOWOiypVQufiNUu1N7kdb9oTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "823940242544-ghg76se1t3svp7729qaduvb14k89olb8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "823940242544-j7noc2n38dvk4f7chcadde6n7sfoebjn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.polymathe.biolens"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823940242544:android:c8b99740fe1c082da828b5",
+        "android_client_info": {
+          "package_name": "com.polymathe.biolensback"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "823940242544-ghg76se1t3svp7729qaduvb14k89olb8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0G7NwXmDOWOiypVQufiNUu1N7kdb9oTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "823940242544-ghg76se1t3svp7729qaduvb14k89olb8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "823940242544-j7noc2n38dvk4f7chcadde6n7sfoebjn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.polymathe.biolens"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
