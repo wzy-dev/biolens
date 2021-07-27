@@ -50,7 +50,7 @@ class _MyAppState extends State<MyApp> {
           ];
 
           Future.wait(query).then((value) {
-            print('sync');
+            // print('sync');
             FirebaseFirestore.instance.disableNetwork().then((value) {
               print('disable');
               setState(() {
