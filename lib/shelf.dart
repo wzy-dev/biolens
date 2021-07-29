@@ -5,3 +5,4 @@ export './src/products_list.dart';
 export './src/product.dart';
 export './src/picture.dart';
 export './src/camera.dart';
+export './src/trainmodel.dart';

@@ -1,4 +1,5 @@
 import 'package:biolens/shelf.dart';
+import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,21 +8,32 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 
-void main() {
+Future<void> main() async {
   //For Firebase
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(MyApp());
+// Obtain a list of the available cameras on the device.
+  final cameras = await availableCameras();
+
+// Get a specific camera from the list of available cameras.
+  final firstCamera = cameras.first;
+
+  runApp(MyApp(camera: firstCamera));
 
   //For Navigation bar
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarIconBrightness: Brightness.dark,
+    // statusBarIconBrightness: Brightness.dark,
+    // statusBarColor: Color.fromARGB(0, 0, 0, 0),
     systemNavigationBarColor: Color.fromRGBO(241, 246, 249, 1),
-    statusBarColor: Color.fromARGB(0, 0, 0, 0),
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
 }
 
 class MyApp extends StatefulWidget {
+  MyApp({this.camera});
+
+  final camera;
+
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -54,7 +66,7 @@ class _MyAppState extends State<MyApp> {
             FirebaseFirestore.instance.disableNetwork().then((value) {
               print('disable');
               setState(() {
-                _home = Homepage();
+                _home = Homepage(camera: widget.camera);
               });
             });
           });

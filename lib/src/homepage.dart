@@ -4,9 +4,11 @@ import 'package:biolens/shelf.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Homepage extends StatelessWidget {
-  const Homepage({Key? key, this.snapshot}) : super(key: key);
+  const Homepage({Key? key, this.snapshot, this.camera}) : super(key: key);
 
   final AsyncSnapshot<QuerySnapshot<Object?>>? snapshot;
+
+  final camera;
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +16,16 @@ class Homepage extends StatelessWidget {
       child: Stack(
         children: [
           Container(
-            child: Camera(),
+            child: TrainModel(),
+            // child: Camera(camera),
             height: MediaQuery.of(context).size.height * 0.8,
             width: double.infinity,
           ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: 240,
+              height: 10,
+              // height: 210,
               padding: EdgeInsets.all(35),
               child: Column(
                 children: [
