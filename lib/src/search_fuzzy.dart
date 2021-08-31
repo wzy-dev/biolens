@@ -81,7 +81,7 @@ class SearchFuzzy {
       'indications': 'indications',
       'categories': 'category'
     };
-    print(_searchListCategory);
+
     if (bestResult == null || bestResult['collection'] == 'products') {
       resultProduct.forEach((element) => data.add(element.item));
     } else {

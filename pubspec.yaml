@@ -30,18 +30,24 @@ dependencies:
   firebase_auth: ^3.0.1
   firebase_storage: ^10.0.1
   fuzzy: <1.0.0
-  transparent_image: ^2.0.0
-  camera:
-    git:
-      url: https://github.com/bottlepay/plugins.git
-      path: packages/camera/camera
-      ref: android-rework
-  google_ml_kit: ^0.7.0
+  # camera:
+  #   git:
+  #     url: https://github.com/bottlepay/plugins.git
+  #     path: packages/camera/camera
+  #     ref: android-rework
+  # image_picker: ^0.8.2
+  google_ml_kit: ^0.6.0
   camerawesome: ^0.3.0+1
   path_provider: ^2.0.2
+  path: ^1.8.0
   image: ^3.0.2
   string_similarity: ^2.0.0
-  image_picker: ^0.8.2
+  flutter_image_compress: ^1.0.0-nullsafety
+  diacritic: ^0.1.3
+  flutter_svg: ^0.22.0
+  loading_indicator: ^3.0.1
+  shared_preferences: ^2.0.6
+  cached_network_image: ^3.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

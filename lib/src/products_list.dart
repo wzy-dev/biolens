@@ -1,6 +1,6 @@
 import 'package:biolens/shelf.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 class ProductsList extends StatelessWidget {
   const ProductsList({Key? key, required this.results}) : super(key: key);
@@ -85,46 +85,21 @@ class Item extends StatefulWidget {
 class _ItemState extends State<Item> {
   String? _pictureUrl;
 
-  void setStateIfMounted(f) {
-    if (mounted) setState(f);
-  }
-
-  void _getPictureUrl(filename) async {
-    String url = await Picture.getDownloadUrl(filename: filename);
-    setStateIfMounted(() {
-      _pictureUrl = url;
-    });
-  }
-
-  @override
-  void initState() {
-    String? filename = widget.data['picture'];
-    if (filename != null) _getPictureUrl(filename);
-
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(oldWidget) {
-    String? filename = widget.data['picture'];
-    if (filename != null) {
-      _getPictureUrl(filename);
-    } else {
-      _pictureUrl = null;
-    }
-
-    super.didUpdateWidget(oldWidget);
+  String _getPictureUrl(filename) {
+    return "https://firebasestorage.googleapis.com/v0/b/biolens-ef25c.appspot.com/o/uploads%2F$filename?alt=media";
   }
 
   @override
   Widget build(BuildContext context) {
+    String? filename = widget.data['picture'];
+    if (filename != null) _pictureUrl = _getPictureUrl(filename);
+
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: () => Navigator.of(context).push(
         CupertinoPageRoute(
           builder: (context) => Product(
             product: widget.data,
-            pictureUrl: _pictureUrl,
           ),
         ),
       ),
@@ -159,22 +134,21 @@ class _ItemState extends State<Item> {
                 width: 80,
                 padding: EdgeInsets.all(5),
                 child: Center(
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 200),
-                    child: _pictureUrl != null
-                        ? FadeInImage.memoryNetwork(
-                            image: _pictureUrl!,
-                            placeholder: kTransparentImage,
+                  child: _pictureUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: _pictureUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget: (BuildContext context, String string,
+                                  dynamic dynamic) =>
+                              Container(),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Image(
+                            image: AssetImage("assets/camera_off.png"),
                             fit: BoxFit.cover,
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Image(
-                              image: AssetImage("assets/camera_off.png"),
-                              fit: BoxFit.cover,
-                            ),
                           ),
-                  ),
+                        ),
                 ),
               ),
             ),

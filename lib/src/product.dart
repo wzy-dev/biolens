@@ -1,13 +1,14 @@
+import 'package:biolens/shelf.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 class Product extends StatelessWidget {
-  const Product({Key? key, required this.product, this.pictureUrl})
-      : super(key: key);
+  const Product({
+    Key? key,
+    required this.product,
+  }) : super(key: key);
 
   final Map product;
-  final String? pictureUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +37,7 @@ class Product extends StatelessWidget {
                     color: Color.fromRGBO(0, 0, 0, 0.2),
                     spreadRadius: 2,
                     blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: Offset(0, 3),
                   ),
                 ],
                 color: CupertinoColors.white,
@@ -48,7 +49,7 @@ class Product extends StatelessWidget {
               child: Row(
                 children: [
                   Hero(
-                    tag: product['id'],
+                    tag: product['id'] ?? "nohero",
                     transitionOnUserGestures: true,
                     child: Container(
                       decoration: BoxDecoration(
@@ -61,17 +62,14 @@ class Product extends StatelessWidget {
                       width: 150,
                       padding: EdgeInsets.all(10),
                       child: Center(
-                        child: pictureUrl != null
-                            ? FadeInImage.memoryNetwork(
-                                image: pictureUrl!,
-                                placeholder: kTransparentImage,
-                                fit: BoxFit.cover,
-                              )
-                            : Image(
-                                image: AssetImage("assets/camera_off.png"),
-                                fit: BoxFit.cover,
-                              ),
-                      ),
+                          child: product['picture'] == null
+                              ? Image(
+                                  image: AssetImage("assets/camera_off.png"),
+                                  fit: BoxFit.cover,
+                                )
+                              : CustomPicture(
+                                  picture: product['picture'],
+                                )),
                     ),
                   ),
                   SizedBox(
@@ -188,6 +186,9 @@ class Product extends StatelessWidget {
                             ],
                           )
                         : Container(),
+                  ),
+                  SizedBox(
+                    height: 10,
                   ),
                 ],
               ),
