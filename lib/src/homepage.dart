@@ -20,7 +20,7 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
-  bool _cameraIsVisible = true;
+  bool _cameraIsVisible = false;
   bool _cameraReloading = false;
   bool _searchLoading = false;
   Object _cameraKey = Object();
@@ -266,6 +266,24 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                   ),
                 ),
               ],
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: CupertinoButton(
+                onPressed: () => Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (context) => About(),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
+                child: Icon(
+                  CupertinoIcons.info_circle,
+                  size: 26,
+                  color: Color.fromRGBO(241, 246, 249, 1),
+                ),
+              ),
             ),
           ),
           Align(
