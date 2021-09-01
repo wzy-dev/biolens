@@ -4,6 +4,19 @@
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+  <queries> 
+    <!-- If your app makes calls -->
+    <intent>
+      <action android:name="android.intent.action.DIAL" />
+      <data android:scheme="tel" />
+    </intent>
+    <!-- If your app emails -->
+    <intent>
+      <action android:name="android.intent.action.SEND" />
+      <data android:mimeType="*/*" />
+    </intent>
+  </queries>
+
    <application
         android:label="biolens"
         android:icon="@mipmap/ic_launcher">
