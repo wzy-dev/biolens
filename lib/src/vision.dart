@@ -64,8 +64,10 @@ class MyVision {
       );
     }
 
-    Future<QuerySnapshot> _productsEntity =
-        FirebaseFirestore.instance.collection('products').get();
+    Future<QuerySnapshot> _productsEntity = FirebaseFirestore.instance
+        .collection('products')
+        .where("enabled", isEqualTo: true)
+        .get();
 
     List<String> _listNames = [];
     Object? _result;

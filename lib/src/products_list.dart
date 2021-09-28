@@ -92,7 +92,7 @@ class _ItemState extends State<Item> {
   @override
   Widget build(BuildContext context) {
     String? filename = widget.data['picture'];
-    if (filename != null) _pictureUrl = _getPictureUrl(filename);
+    _pictureUrl = filename != null ? _getPictureUrl(filename) : null;
 
     return CupertinoButton(
       padding: EdgeInsets.zero,

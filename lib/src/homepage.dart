@@ -4,16 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:biolens/shelf.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 
 class Homepage extends StatefulWidget {
-  Homepage({Key? key, this.snapshot}) : super(key: key);
-
-  final AsyncSnapshot<QuerySnapshot<Object?>>? snapshot;
+  Homepage({Key? key}) : super(key: key);
 
   @override
   _HomepageState createState() => _HomepageState();

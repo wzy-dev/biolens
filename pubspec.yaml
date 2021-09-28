@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -25,22 +25,16 @@ dependencies:
     sdk: flutter
   flutter_localizations: 
     sdk: flutter         
-  firebase_core: ^1.4.0
-  cloud_firestore: ^2.4.0
-  firebase_auth: ^3.0.1
+  firebase_core: ^1.6.0
+  cloud_firestore: ^2.5.3
+  firebase_auth: ^3.1.1
   firebase_storage: ^10.0.1
+  google_ml_kit: ^0.7.2
   fuzzy: <1.0.0
-  # camera:
-  #   git:
-  #     url: https://github.com/bottlepay/plugins.git
-  #     path: packages/camera/camera
-  #     ref: android-rework
-  # image_picker: ^0.8.2
-  google_ml_kit: ^0.6.0
   camerawesome: ^0.3.0+1
-  path_provider: ^2.0.2
-  path: ^1.8.0
-  image: ^3.0.2
+  # path_provider: ^2.0.2
+  # path: ^1.8.0
+  # image: ^3.0.2
   string_similarity: ^2.0.0
   flutter_image_compress: ^1.0.0-nullsafety
   diacritic: ^0.1.3

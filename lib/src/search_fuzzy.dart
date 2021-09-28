@@ -4,7 +4,7 @@ import 'package:fuzzy/fuzzy.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchFuzzy {
-  static searchByName({
+  static Map searchByName({
     required String query,
     // [products, indications, category]
     required List? listSnapshots,
@@ -13,7 +13,7 @@ class SearchFuzzy {
     List<Map> _searchListIndication = [];
     List<Map> _searchListCategory = [];
 
-    if (listSnapshots == null) return [];
+    if (listSnapshots == null) return {};
 
     // Products
     listSnapshots[0].docs.forEach((DocumentSnapshot document) {

@@ -21,12 +21,21 @@ class _SearchState extends State<Search> {
     super.initState();
 
     List<Future> query = [
-      FirebaseFirestore.instance.collection('products').orderBy("name").get(),
       FirebaseFirestore.instance
-          .collection('indications')
+          .collection('products')
+          .where("enabled", isEqualTo: true)
           .orderBy("name")
           .get(),
-      FirebaseFirestore.instance.collection('categories').orderBy("name").get(),
+      FirebaseFirestore.instance
+          .collection('indications')
+          .where("enabled", isEqualTo: true)
+          .orderBy("name")
+          .get(),
+      FirebaseFirestore.instance
+          .collection('categories')
+          .where("enabled", isEqualTo: true)
+          .orderBy("name")
+          .get(),
     ];
 
     Future.wait(query).then((listSnapshot) {
