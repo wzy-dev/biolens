@@ -4,7 +4,13 @@
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <!-- Show a splash screen on the activity. Automatically removed when
              Flutter draws its first frame -->
-        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowBackground">@drawable/splashscreen</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowActionBar">true</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your

@@ -33,7 +33,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -62,7 +62,29 @@ android {
             shrinkResources true // add this
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' // add this
             signingConfig signingConfigs.release
+            // Choix des packages mlkit
+            aaptOptions {
+                ignoreAssetsPattern '!mlkit_pose:!mlkit_label_default_model:'
+            }
         }
+        debug {
+            // Choix des packages mlkit
+            aaptOptions {
+                ignoreAssetsPattern '!mlkit_pose:!mlkit_label_default_model:'
+            }
+        }
+    }
+
+    packagingOptions {
+        exclude 'lib/4**/libtranslate_jni.so'
+        exclude 'lib/**/libdigitalink.so'
+        exclude 'lib/**/libxeno_native.so'
+        exclude 'lib/**/libmlkitcommonpipeline.so'
+        exclude 'lib/**/libbarhopper_v2.so'
+        exclude 'lib/**/libclassifier_jni.so'
+        exclude 'lib/**/libface_detector_v2_jni.so'
+        exclude 'lib/**/libtensorflowlite_jni.so'
+        exclude 'lib/**/liblanguage_id_jni.so'
     }
 }
 

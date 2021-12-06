@@ -608,6 +608,8 @@ PODS:
   - nanopb/encode (2.30908.0)
   - path_provider (0.0.1):
     - Flutter
+  - "permission_handler (5.1.0+2)":
+    - Flutter
   - PromisesObjC (2.0.0)
   - Protobuf (3.18.0)
   - SDWebImage (5.11.1):
@@ -635,6 +637,7 @@ DEPENDENCIES:
   - flutter_image_compress (from `.symlinks/plugins/flutter_image_compress/ios`)
   - google_ml_kit (from `.symlinks/plugins/google_ml_kit/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
   - shared_preferences (from `.symlinks/plugins/shared_preferences/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
@@ -706,6 +709,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/google_ml_kit/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
+  permission_handler:
+    :path: ".symlinks/plugins/permission_handler/ios"
   shared_preferences:
     :path: ".symlinks/plugins/shared_preferences/ios"
   sqflite:
@@ -763,6 +768,7 @@ SPEC CHECKSUMS:
   MLKitXenoCommon: bf5b3528d77cabe0d04f3c13536ba1302346e31c
   nanopb: a0ba3315591a9ae0a16a309ee504766e90db0c96
   path_provider: d1e9807085df1f9cc9318206cd649dc0b76be3de
+  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
   PromisesObjC: 68159ce6952d93e17b2dfe273b8c40907db5ba58
   Protobuf: 1a37ebea1338949e9ac35a3f06e80b3f536eec8d
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
@@ -772,6 +778,6 @@ SPEC CHECKSUMS:
   SSZipArchive: e7b4f3d9e780c2acc1764cd88fbf2de28f26e5b2
   url_launcher: b6e016d912f04be9f5bf6e8e82dc599b7ba59649
 
-PODFILE CHECKSUM: fe0e1ee7f3d1f7d00b11b474b62dd62134535aea
+PODFILE CHECKSUM: 0e285b430454b000e5c6fe5bb77410c97097ae09
 
-COCOAPODS: 1.10.2
+COCOAPODS: 1.11.2

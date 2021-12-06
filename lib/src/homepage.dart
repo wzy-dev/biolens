@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_indicator/loading_indicator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Homepage extends StatefulWidget {
   Homepage({Key? key}) : super(key: key);
@@ -18,6 +20,7 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   bool _cameraIsVisible = false;
+  bool? _permissionEnabled;
   bool _cameraReloading = false;
   bool _searchLoading = false;
   Object _cameraKey = Object();
@@ -102,6 +105,45 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
     });
   }
 
+  void _onPermissionsResult() async {
+    PermissionStatus statusCamera = await Permission.camera.status;
+    PermissionStatus statusStorage = await Permission.storage.status;
+    await Permission.camera.request();
+
+    if ((statusCamera.isDenied ||
+            statusCamera.isPermanentlyDenied ||
+            statusStorage.isDenied ||
+            statusStorage.isPermanentlyDenied) &&
+        _permissionEnabled != false) {
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.camera,
+        Permission.storage,
+      ].request();
+
+      statusCamera = statuses[Permission.camera] ?? statusCamera;
+      statusStorage = statuses[Permission.storage] ?? statusCamera;
+
+      if (!statusCamera.isDenied &&
+          !statusCamera.isPermanentlyDenied &&
+          !statusStorage.isDenied &&
+          !statusStorage.isPermanentlyDenied) {
+        return;
+      } else {
+        setState(() {
+          _permissionEnabled = false;
+        });
+      }
+    } else if ((!statusCamera.isDenied &&
+            !statusCamera.isPermanentlyDenied &&
+            !statusStorage.isDenied &&
+            !statusStorage.isPermanentlyDenied) &&
+        _permissionEnabled != true) {
+      setState(() {
+        _permissionEnabled = true;
+      });
+    }
+  }
+
   Widget _drawCamera() {
     if (_notification == AppLifecycleState.inactive) {
       setState(() {
@@ -109,30 +151,73 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
       });
       return Container();
     } else {
-      return AnimatedOpacity(
+      _onPermissionsResult();
+      return AnimatedSwitcher(
         duration: Duration(milliseconds: 500),
-        opacity: _cameraIsVisible ? 1 : 0,
-        child: Stack(
-          children: [
-            CameraAwesome(
-              onCameraStarted: () {
-                setState(() {
-                  _cameraIsVisible = true;
-                  _cameraReloading = false;
-                });
-              },
-              key: ValueKey(_cameraKey),
-              sensor: ValueNotifier(Sensors.BACK),
-              photoSize: ValueNotifier(Size(0, 0)),
-              captureMode: ValueNotifier(CaptureModes.PHOTO),
-            ),
-            Container(
-              color: _cameraReloading
-                  ? CupertinoColors.darkBackgroundGray
-                  : Color.fromRGBO(0, 0, 0, 0),
-            ),
-          ],
-        ),
+        child: _permissionEnabled == null
+            ? Container()
+            : _permissionEnabled == true
+                ? AnimatedOpacity(
+                    duration: Duration(milliseconds: 500),
+                    opacity: _cameraIsVisible ? 1 : 0,
+                    child: Stack(
+                      children: [
+                        CameraAwesome(
+                          onCameraStarted: () {
+                            setState(() {
+                              _cameraIsVisible = true;
+                              _cameraReloading = false;
+                            });
+                          },
+                          key: ValueKey(_cameraKey),
+                          sensor: ValueNotifier(Sensors.BACK),
+                          photoSize: ValueNotifier(Size(0, 0)),
+                          captureMode: ValueNotifier(CaptureModes.PHOTO),
+                        ),
+                        Container(
+                          color: _cameraReloading
+                              ? CupertinoColors.darkBackgroundGray
+                              : Color.fromRGBO(0, 0, 0, 0),
+                        ),
+                      ],
+                    ),
+                  )
+                : Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/camera_off.svg',
+                        width: MediaQuery.of(context).size.width,
+                        color: Color.fromRGBO(255, 255, 255, 0.05),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(30),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Vous devez donner la permission à biolens d'accéder à votre caméra pour utiliser le scanner !",
+                              style: TextStyle(
+                                  color: Color.fromRGBO(255, 255, 255, 0.7)),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Appuyez ici pour accéder aux paramétres et donner l'autorisation.",
+                              style: TextStyle(
+                                color: Color.fromRGBO(255, 255, 255, 0.7),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
       );
     }
   }
@@ -154,106 +239,54 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
           Container(
             height: _viewportHeight - 190,
             width: _viewportWidth,
-            child: Stack(
-              children: [
-                Container(
-                  child: _drawCamera(),
-                  clipBehavior: Clip.hardEdge,
-                  decoration: BoxDecoration(),
-                ),
-                AnimatedOpacity(
-                  curve: Curves.bounceInOut,
-                  opacity: _searchLoading
-                      ? 1
-                      : _cameraIsVisible
-                          ? 0.4
-                          : 0,
-                  duration: Duration(milliseconds: _searchLoading ? 200 : 1000),
-                  child: ColorFiltered(
-                    colorFilter: ColorFilter.mode(
-                      Color.fromRGBO(255, 255, 255, 0.8),
-                      BlendMode.srcOut,
-                    ),
-                    child: Stack(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.black,
-                            backgroundBlendMode: BlendMode.dstOut,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: AnimatedContainer(
-                            curve: Curves.easeOutQuart,
-                            duration: Duration(milliseconds: 500),
-                            height: _searchLoading == false
-                                ? _captureHoleHeight - 30
-                                : 0,
-                            width: _searchLoading == false
-                                ? _captureHoleWidth - 30
-                                : 0,
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.destructiveRed,
-                              borderRadius: BorderRadius.circular(
-                                  _searchLoading == false ? 20 : 100),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+            child: CupertinoButton(
+              padding: const EdgeInsets.all(0),
+              onPressed:
+                  _permissionEnabled == true ? null : () => openAppSettings(),
+              child: Stack(
+                children: [
+                  Container(
+                    child: _drawCamera(),
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(),
                   ),
-                ),
-                AnimatedOpacity(
-                  curve: Curves.ease,
-                  opacity: _cameraIsVisible ? 1 : 0,
-                  duration: Duration(milliseconds: 2000),
-                  child: Center(
-                    child: Container(
-                      // height: 280,
-                      // width: 230,
-                      height: _captureHoleHeight,
-                      width: _captureHoleWidth,
+                  AnimatedOpacity(
+                    curve: Curves.bounceInOut,
+                    opacity: _searchLoading
+                        ? 1
+                        : _cameraIsVisible
+                            ? 0.4
+                            : 0,
+                    duration:
+                        Duration(milliseconds: _searchLoading ? 200 : 1000),
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Color.fromRGBO(255, 255, 255, 0.8),
+                        BlendMode.srcOut,
+                      ),
                       child: Stack(
                         children: [
-                          Align(
-                            alignment: Alignment.topLeft,
-                            child: RotatedBox(
-                              quarterTurns: 0,
-                              child: Corner(loading: _searchLoading),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.black,
+                              backgroundBlendMode: BlendMode.dstOut,
                             ),
                           ),
                           Align(
-                            alignment: Alignment.topRight,
-                            child: RotatedBox(
-                              quarterTurns: 1,
-                              child: Corner(loading: _searchLoading),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomLeft,
-                            child: RotatedBox(
-                              quarterTurns: 3,
-                              child: Corner(loading: _searchLoading),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: RotatedBox(
-                              quarterTurns: 2,
-                              child: Corner(loading: _searchLoading),
-                            ),
-                          ),
-                          AnimatedOpacity(
-                            duration: Duration(milliseconds: 200),
-                            opacity: _searchLoading ? 1 : 0,
-                            child: Center(
-                              child: LoadingIndicator(
-                                indicatorType: Indicator.ballScale,
-                                colors: [
-                                  CupertinoTheme.of(context).primaryColor
-                                ],
-                                strokeWidth: 50,
+                            alignment: Alignment.center,
+                            child: AnimatedContainer(
+                              curve: Curves.easeOutQuart,
+                              duration: Duration(milliseconds: 500),
+                              height: _searchLoading == false
+                                  ? _captureHoleHeight - 30
+                                  : 0,
+                              width: _searchLoading == false
+                                  ? _captureHoleWidth - 30
+                                  : 0,
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.destructiveRed,
+                                borderRadius: BorderRadius.circular(
+                                    _searchLoading == false ? 20 : 100),
                               ),
                             ),
                           ),
@@ -261,8 +294,66 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                ),
-              ],
+                  AnimatedOpacity(
+                    curve: Curves.ease,
+                    opacity: _cameraIsVisible ? 1 : 0,
+                    duration: Duration(milliseconds: 2000),
+                    child: Center(
+                      child: Container(
+                        // height: 280,
+                        // width: 230,
+                        height: _captureHoleHeight,
+                        width: _captureHoleWidth,
+                        child: Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: RotatedBox(
+                                quarterTurns: 0,
+                                child: Corner(loading: _searchLoading),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: RotatedBox(
+                                quarterTurns: 1,
+                                child: Corner(loading: _searchLoading),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: RotatedBox(
+                                quarterTurns: 3,
+                                child: Corner(loading: _searchLoading),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: RotatedBox(
+                                quarterTurns: 2,
+                                child: Corner(loading: _searchLoading),
+                              ),
+                            ),
+                            AnimatedOpacity(
+                              duration: Duration(milliseconds: 200),
+                              opacity: _searchLoading ? 1 : 0,
+                              child: Center(
+                                child: LoadingIndicator(
+                                  indicatorType: Indicator.ballScale,
+                                  colors: [
+                                    CupertinoTheme.of(context).primaryColor
+                                  ],
+                                  strokeWidth: 50,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           SafeArea(
@@ -306,7 +397,9 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                           letterSpacing: 1,
                         ),
                       ),
-                      onPressed: _searchLoading ? null : () => _toScan(),
+                      onPressed: _searchLoading || _permissionEnabled != true
+                          ? null
+                          : () => _toScan(),
                       color: CupertinoTheme.of(context).primaryColor,
                     ),
                   ),

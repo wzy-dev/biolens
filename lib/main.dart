@@ -38,7 +38,6 @@ class _MyAppState extends State<MyApp> {
 
   Future<SharedPreferences> _getLastEditTimestap() async {
     return await SharedPreferences.getInstance();
-    // return prefs.getInt('updatedAt') ?? DateTime.now().millisecondsSinceEpoch;
   }
 
   void _initializeAction() {
@@ -74,7 +73,7 @@ class _MyAppState extends State<MyApp> {
               FirebaseFirestore.instance
                   .collection('categories')
                   .where("editedAt", isGreaterThan: editedAt)
-                  .get(),
+                  .get()
             ];
 
             Future.wait(query).then((value) {
@@ -87,31 +86,82 @@ class _MyAppState extends State<MyApp> {
                 setState(() {
                   _home = Homepage();
                 });
+              }).onError((error, stackTrace) async {
+                _drawError(
+                    "Impossible de se déconnecter du réseau (code 4000)");
               });
+            }).onError((error, stackTrace) async {
+              _drawError("Synchronisation impossible (code 3000)");
             });
+          }).onError((error, stackTrace) async {
+            _drawError("Impossible de se connecter au réseau (code 2000)");
           });
+        }).onError((error, stackTrace) async {
+          _drawError(
+              "Vous devez être connecté à Internet pour accéder la première fois à biolens");
+        }).timeout(Duration(seconds: 5), onTimeout: () async {
+          _drawError(
+              "Votre connexion Internet semble insuffisante, veuillez vérifier vos paramètres réseaux");
         });
       }).onError((error, stackTrace) async {
-        setState(() {
-          _home = CupertinoPageScaffold(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: CupertinoButton(
+        _drawError("Accès impossible au préférences partagées (code 1000)");
+      });
+    });
+  }
+
+  void _drawError(String error) {
+    return setState(() {
+      _home = CupertinoPageScaffold(
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: IntrinsicWidth(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                    color: Color.fromRGBO(105, 20, 28, 1),
+                    border: Border.all(
+                      color: Color.fromRGBO(137, 24, 36, 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.exclamationmark_triangle,
+                        color: CupertinoColors.white,
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Expanded(
+                        child: Text(
+                          error,
+                          style: TextStyle(color: CupertinoColors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                CupertinoButton(
                   onPressed: () {
                     setState(() {
                       _home = null;
                     });
                     _initializeAction();
                   },
-                  child: Text(
-                      "Vous devez être connecté à Internet pour votre premier accès à biolens"),
+                  child: Text("Rafraîchir"),
                 ),
-              ),
+              ],
             ),
-          );
-        });
-      });
+          ),
+        ),
+      );
     });
   }
 
