@@ -159,27 +159,26 @@ class _ItemState extends State<Item> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        widget.data['name'].toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: CupertinoColors.darkBackgroundGray,
+                  RichText(
+                    text: new TextSpan(
+                      children: <TextSpan>[
+                        new TextSpan(
+                          text: "${widget.data['name'].toUpperCase()} ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: CupertinoColors.darkBackgroundGray,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        widget.data['brand'],
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: CupertinoColors.darkBackgroundGray,
+                        new TextSpan(
+                          text: widget.data['brand'],
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: CupertinoColors.darkBackgroundGray,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   SizedBox(
                     height: 5,
@@ -189,7 +188,7 @@ class _ItemState extends State<Item> {
                         ' > ' +
                         widget.data['names']['subCategory'].toLowerCase(),
                     overflow: TextOverflow.ellipsis,
-                    maxLines: 3,
+                    maxLines: 2,
                     style: TextStyle(
                         color: CupertinoColors.systemGrey, fontSize: 14),
                   ),

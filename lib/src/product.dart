@@ -1,8 +1,9 @@
 import 'package:biolens/shelf.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
-class Product extends StatelessWidget {
+class Product extends StatefulWidget {
   const Product({
     Key? key,
     required this.product,
@@ -11,13 +12,24 @@ class Product extends StatelessWidget {
   final Map product;
 
   @override
+  State<Product> createState() => _ProductState();
+}
+
+class _ProductState extends State<Product> {
+  ScrollController _scrollController = ScrollController();
+
+  double? _defaultHeaderHeight;
+  double? _headerHeight;
+  GlobalKey _headerKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.white,
         border: Border.all(width: 0, color: CupertinoColors.white),
         middle: Text(
-          product['name'].toUpperCase(),
+          widget.product['name'].toUpperCase(),
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20,
@@ -46,151 +58,198 @@ class Product extends StatelessWidget {
                   bottomLeft: Radius.circular(20),
                 ),
               ),
-              child: Row(
-                children: [
-                  Hero(
-                    tag: product['id'] ?? "nohero",
-                    transitionOnUserGestures: true,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.white,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      height: 150,
-                      width: 150,
-                      padding: EdgeInsets.all(10),
-                      child: Center(
-                          child: product['picture'] == null
-                              ? Image(
-                                  image: AssetImage("assets/camera_off.png"),
-                                  fit: BoxFit.cover,
-                                )
-                              : CustomPicture(
-                                  picture: product['picture'],
-                                )),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: AnimatedSize(
+                duration: Duration(milliseconds: 200),
+                child: Container(
+                  key: _headerKey,
+                  height: _headerHeight,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              product['name'].toUpperCase(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 23,
-                                color: CupertinoColors.darkBackgroundGray,
+                        Hero(
+                          tag: widget.product['id'] ?? "nohero",
+                          transitionOnUserGestures: true,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.white,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
                               ),
                             ),
-                            SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              product['brand'],
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: CupertinoColors.darkBackgroundGray,
-                              ),
-                            ),
-                          ],
+                            height: 150,
+                            width: 150,
+                            padding: EdgeInsets.all(10),
+                            child: Center(
+                                child: widget.product['picture'] == null
+                                    ? Image(
+                                        image:
+                                            AssetImage("assets/camera_off.png"),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : CustomPicture(
+                                        picture: widget.product['picture'],
+                                      )),
+                          ),
                         ),
                         SizedBox(
-                          height: 5,
+                          width: 10,
                         ),
-                        Text(
-                          product['names']['category'].toLowerCase() +
-                              ' > ' +
-                              product['names']['subCategory'].toLowerCase(),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 3,
-                          style: TextStyle(
-                              color: CupertinoColors.systemGrey, fontSize: 17),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.bottomLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 5),
+                                    child: RichText(
+                                      text: new TextSpan(
+                                        children: <TextSpan>[
+                                          new TextSpan(
+                                            text:
+                                                "${widget.product['name'].toUpperCase()} ",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              color: CupertinoColors
+                                                  .darkBackgroundGray,
+                                              fontSize: 23,
+                                            ),
+                                          ),
+                                          new TextSpan(
+                                            text: widget.product['brand'],
+                                            style: TextStyle(
+                                              fontStyle: FontStyle.italic,
+                                              color: CupertinoColors
+                                                  .darkBackgroundGray,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  widget.product['names']['category']
+                                          .toLowerCase() +
+                                      ' > ' +
+                                      widget.product['names']['subCategory']
+                                          .toLowerCase(),
+                                  style: TextStyle(
+                                      color: CupertinoColors.systemGrey,
+                                      fontSize: 17),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
             Expanded(
-              child: ListView(
-                children: [
-                  SizedBox(
-                    height: 10,
-                  ),
-                  GradientList(
-                    list: product['names']['indications'],
-                    title: "INDICATIONS",
-                    colorBegin: Color.fromRGBO(125, 196, 93, 1),
-                    colorEnd: Color.fromRGBO(100, 214, 178, 1),
-                    colorTitle: Color.fromRGBO(75, 117, 55, 0.8),
-                    icon: Icons.check,
-                  ),
-                  GradientList(
-                    list: product['precautions'],
-                    title: "PRECAUTIONS",
-                    colorBegin: Color.fromRGBO(237, 190, 59, 1),
-                    colorEnd: Color.fromRGBO(222, 95, 110, 1),
-                    colorTitle: Color.fromRGBO(143, 114, 36, 0.8),
-                    icon: Icons.warning_rounded,
-                  ),
-                  GradientList(
-                    list: product['ingredients'],
-                    title: "COMPOSITION",
-                    colorBegin: Color.fromRGBO(134, 219, 224, 1),
-                    colorEnd: Color.fromRGBO(121, 143, 219, 1),
-                    colorTitle: Color.fromRGBO(73, 120, 122, 0.8),
-                    icon: Icons.biotech,
-                  ),
-                  Container(
-                    margin: EdgeInsets.fromLTRB(30, 30, 30, 0),
-                    width: double.infinity,
-                    child: product['cookbook'] != null &&
-                            product['cookbook'].length > 0
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Utilisation",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      CupertinoTheme.of(context).primaryColor,
+              child: NotificationListener(
+                onNotification: (notification) {
+                  if (_headerKey.currentContext != null) {
+                    RenderBox render = _headerKey.currentContext!
+                        .findRenderObject() as RenderBox;
+                    if (_defaultHeaderHeight == null) {
+                      setState(() {
+                        _defaultHeaderHeight = render.size.height;
+                      });
+                    }
+
+                    double height = _defaultHeaderHeight! -
+                        _scrollController.position.pixels;
+                    if (height < 0) height = 0;
+                    if (height > _defaultHeaderHeight!)
+                      height = _defaultHeaderHeight!;
+
+                    setState(() {
+                      _headerHeight = height;
+                    });
+                  }
+                  return true;
+                },
+                child: ListView(
+                  controller: _scrollController,
+                  children: [
+                    SizedBox(
+                      height: 10,
+                    ),
+                    GradientList(
+                      list: widget.product['names']['indications'],
+                      title: "INDICATIONS",
+                      colorBegin: Color.fromRGBO(125, 196, 93, 1),
+                      colorEnd: Color.fromRGBO(100, 214, 178, 1),
+                      colorTitle: Color.fromRGBO(75, 117, 55, 0.8),
+                      icon: Icons.check,
+                    ),
+                    GradientList(
+                      list: widget.product['precautions'],
+                      title: "PRECAUTIONS",
+                      colorBegin: Color.fromRGBO(237, 190, 59, 1),
+                      colorEnd: Color.fromRGBO(222, 95, 110, 1),
+                      colorTitle: Color.fromRGBO(143, 114, 36, 0.8),
+                      icon: Icons.warning_rounded,
+                    ),
+                    GradientList(
+                      list: widget.product['ingredients'],
+                      title: "COMPOSITION",
+                      colorBegin: Color.fromRGBO(134, 219, 224, 1),
+                      colorEnd: Color.fromRGBO(121, 143, 219, 1),
+                      colorTitle: Color.fromRGBO(73, 120, 122, 0.8),
+                      icon: Icons.biotech,
+                    ),
+                    Container(
+                      margin: EdgeInsets.fromLTRB(30, 30, 30, 0),
+                      width: double.infinity,
+                      child: widget.product['cookbook'] != null &&
+                              widget.product['cookbook'].length > 0
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Utilisation",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color:
+                                        CupertinoTheme.of(context).primaryColor,
+                                  ),
                                 ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children:
-                                    product['cookbook'].map<Widget>((element) {
-                                  return Container(
-                                    padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
-                                    child: Text(
-                                      "• " + element,
-                                      style: TextStyle(
-                                        color: Color.fromRGBO(60, 60, 60, 1),
-                                        fontSize: 16,
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: widget.product['cookbook']
+                                      .map<Widget>((element) {
+                                    return Container(
+                                      padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                                      child: Text(
+                                        "• " + element,
+                                        style: TextStyle(
+                                          color: Color.fromRGBO(60, 60, 60, 1),
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
-                              )
-                            ],
-                          )
-                        : Container(),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                ],
+                                    );
+                                  }).toList(),
+                                )
+                              ],
+                            )
+                          : Container(),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

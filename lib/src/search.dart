@@ -26,13 +26,18 @@ class _SearchState extends State<Search> {
           .where("enabled", isEqualTo: true)
           .orderBy("name")
           .get(),
+      // FirebaseFirestore.instance
+      //     .collection('indications')
+      //     .where("enabled", isEqualTo: true)
+      //     .orderBy("name")
+      //     .get(),
+      // FirebaseFirestore.instance
+      //     .collection('categories')
+      //     .where("enabled", isEqualTo: true)
+      //     .orderBy("name")
+      //     .get(),
       FirebaseFirestore.instance
-          .collection('indications')
-          .where("enabled", isEqualTo: true)
-          .orderBy("name")
-          .get(),
-      FirebaseFirestore.instance
-          .collection('categories')
+          .collection('tags')
           .where("enabled", isEqualTo: true)
           .orderBy("name")
           .get(),

@@ -108,7 +108,6 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   void _onPermissionsResult() async {
     PermissionStatus statusCamera = await Permission.camera.status;
     PermissionStatus statusStorage = await Permission.storage.status;
-    await Permission.camera.request();
 
     if ((statusCamera.isDenied ||
             statusCamera.isPermanentlyDenied ||
@@ -145,7 +144,8 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   }
 
   Widget _drawCamera() {
-    if (_notification == AppLifecycleState.inactive) {
+    if (_notification == AppLifecycleState.inactive ||
+        _notification == AppLifecycleState.paused) {
       setState(() {
         _cameraIsVisible = false;
       });

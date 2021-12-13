@@ -73,6 +73,10 @@ class _MyAppState extends State<MyApp> {
               FirebaseFirestore.instance
                   .collection('categories')
                   .where("editedAt", isGreaterThan: editedAt)
+                  .get(),
+              FirebaseFirestore.instance
+                  .collection('tags')
+                  .where("editedAt", isGreaterThan: editedAt)
                   .get()
             ];
 
