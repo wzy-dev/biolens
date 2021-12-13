@@ -1,11 +1,19 @@
 import 'dart:io';
 
+// import 'package:biolens/shelf.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:string_similarity/string_similarity.dart';
 import 'package:path/path.dart';
 import 'package:diacritic/diacritic.dart';
+
+class DenseProduct {
+  const DenseProduct({required this.name, required this.brand});
+
+  final String name;
+  final String brand;
+}
 
 class MyVision {
   static Future recognitionByFile(File file) async {
@@ -29,14 +37,31 @@ class MyVision {
 
     Object? _compareTo({
       required RecognisedText recognisedText,
-      required List<String> dataNames,
+      required List<DenseProduct> dataProducts,
       required QuerySnapshot data,
     }) {
       List<Rating> searchList = [];
       _getWordsList(recognisedText).forEach(
-        (e) => searchList.add(
-          _prepareWord(e).bestMatch(dataNames).bestMatch,
-        ),
+        (e) {
+          List<Rating> _scores = [];
+          dataProducts.map((product) {
+            _scores.add(Rating(
+                target: product.name,
+                rating: StringSimilarity.compareTwoStrings(
+                    _prepareWord(e.replaceAll(product.brand, "")),
+                    product.name)));
+          });
+
+          _scores.sort((a, b) {
+            double aRating = a.rating!;
+            double bRating = b.rating!;
+            return bRating.compareTo(aRating);
+          });
+
+          searchList.add(_scores[0]
+              // _prepareWord(e).bestMatch(dataNames).bestMatch,
+              );
+        },
       );
 
       searchList.sort((a, b) {
@@ -69,7 +94,7 @@ class MyVision {
         .where("enabled", isEqualTo: true)
         .get();
 
-    List<String> _listNames = [];
+    List<DenseProduct> _listProducts = [];
     Object? _result;
 
     InputImage _inputImage = InputImage.fromFile(file);
@@ -84,12 +109,17 @@ class MyVision {
       final RecognisedText recognisedText0 = futures[1];
 
       _products.docs.forEach((DocumentSnapshot document) {
-        _listNames.add(_prepareWord(document['name']));
+        _listProducts.add(
+          DenseProduct(
+            name: _prepareWord(document['name']),
+            brand: _prepareWord(document['brand']),
+          ),
+        );
       });
 
       _result = _compareTo(
         recognisedText: recognisedText0,
-        dataNames: _listNames,
+        dataProducts: _listProducts,
         data: _products,
       );
 
@@ -102,7 +132,7 @@ class MyVision {
               .then((recognisedText270) {
             return _compareTo(
               recognisedText: recognisedText270,
-              dataNames: _listNames,
+              dataProducts: _listProducts,
               data: _products,
             );
           });
@@ -117,7 +147,7 @@ class MyVision {
               .then((recognisedText90) {
             return _compareTo(
               recognisedText: recognisedText90,
-              dataNames: _listNames,
+              dataProducts: _listProducts,
               data: _products,
             );
           });
@@ -132,7 +162,7 @@ class MyVision {
               .then((recognisedText180) {
             return _compareTo(
               recognisedText: recognisedText180,
-              dataNames: _listNames,
+              dataProducts: _listProducts,
               data: _products,
             );
           });

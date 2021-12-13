@@ -65,6 +65,8 @@ class _CustomPictureState extends State<CustomPicture> {
                 imageUrl: _pictureUrl!,
                 fadeInDuration: widget.duration,
                 fit: BoxFit.cover,
+                height: 150,
+                width: 150,
                 errorWidget:
                     (BuildContext context, String string, dynamic dynamic) =>
                         Container(),

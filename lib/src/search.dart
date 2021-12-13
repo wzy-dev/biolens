@@ -15,6 +15,7 @@ class _SearchState extends State<Search> {
   List? _listSnapshots;
   bool _visible = false;
   Map _searchResults = {};
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -102,6 +103,7 @@ class _SearchState extends State<Search> {
                           height: 60,
                           child: CupertinoTextField(
                             focusNode: _focusSearch,
+                            controller: _searchController,
                             onChanged: (value) {
                               setState(() {
                                 _searchResults = SearchFuzzy.searchByName(
@@ -122,6 +124,25 @@ class _SearchState extends State<Search> {
                                 CupertinoIcons.search,
                                 color: CupertinoColors.systemGrey,
                               ),
+                            ),
+                            suffix: Padding(
+                              padding: EdgeInsets.fromLTRB(15, 20, 20, 20),
+                              child: _searchController.text.length > 0
+                                  ? CupertinoButton(
+                                      padding: const EdgeInsets.all(0),
+                                      onPressed: () => setState(() {
+                                        _searchController.text = "";
+                                        _searchResults =
+                                            SearchFuzzy.searchByName(
+                                                query: _searchController.text,
+                                                listSnapshots: _listSnapshots);
+                                      }),
+                                      child: Icon(
+                                        CupertinoIcons.multiply,
+                                        color: CupertinoColors.systemGrey,
+                                      ),
+                                    )
+                                  : SizedBox(),
                             ),
                             placeholder: "Rechercher",
                             placeholderStyle: TextStyle(
