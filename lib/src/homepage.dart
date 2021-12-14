@@ -31,6 +31,7 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   final PictureController awesomeController = PictureController();
   Directory? cacheDirectory;
   Directory? cacheResizedDirectory;
+  bool _isActive = true;
 
   AppLifecycleState? _notification;
 
@@ -82,17 +83,42 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
           ) ??
           File(filePath);
 
-      MyVision.recognitionByFile(fileResized).then((value) {
+      MyVision.recognitionByFile(fileResized).then((value) async {
         setState(() {
           _searchLoading = false;
         });
         if (value == null) return;
-        Navigator.of(context).push(
+
+        bool isDesactivate = false;
+
+        Future.delayed(
+          Duration(milliseconds: 500),
+          () => setState(
+            () {
+              _isActive = false;
+              _cameraIsVisible = false;
+              _cameraReloading = false;
+            },
+          ),
+        ).then((value) => isDesactivate = true);
+
+        await Navigator.of(context).push(
           CupertinoPageRoute(
             builder: (context) => Product(
               product: value,
             ),
           ),
+        );
+
+        Future.delayed(
+          Duration(milliseconds: isDesactivate ? 300 : 500),
+          () {
+            setState(
+              () {
+                _isActive = true;
+              },
+            );
+          },
         );
       });
     }).timeout(Duration(seconds: 3), onTimeout: () async {
@@ -239,132 +265,171 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
           Container(
             height: _viewportHeight - 190,
             width: _viewportWidth,
-            child: CupertinoButton(
-              padding: const EdgeInsets.all(0),
-              onPressed:
-                  _permissionEnabled == true ? null : () => openAppSettings(),
-              child: Stack(
-                children: [
-                  Container(
-                    child: _drawCamera(),
-                    clipBehavior: Clip.hardEdge,
-                    decoration: BoxDecoration(),
-                  ),
-                  AnimatedOpacity(
-                    curve: Curves.bounceInOut,
-                    opacity: _searchLoading
-                        ? 1
-                        : _cameraIsVisible
-                            ? 0.4
-                            : 0,
-                    duration:
-                        Duration(milliseconds: _searchLoading ? 200 : 1000),
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        Color.fromRGBO(255, 255, 255, 0.8),
-                        BlendMode.srcOut,
-                      ),
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.black,
-                              backgroundBlendMode: BlendMode.dstOut,
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.center,
-                            child: AnimatedContainer(
-                              curve: Curves.easeOutQuart,
-                              duration: Duration(milliseconds: 500),
-                              height: _searchLoading == false
-                                  ? _captureHoleHeight - 30
-                                  : 0,
-                              width: _searchLoading == false
-                                  ? _captureHoleWidth - 30
-                                  : 0,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.destructiveRed,
-                                borderRadius: BorderRadius.circular(
-                                    _searchLoading == false ? 20 : 100),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  AnimatedOpacity(
-                    curve: Curves.ease,
-                    opacity: _cameraIsVisible ? 1 : 0,
-                    duration: Duration(milliseconds: 2000),
-                    child: Center(
-                      child: Container(
-                        // height: 280,
-                        // width: 230,
-                        height: _captureHoleHeight,
-                        width: _captureHoleWidth,
-                        child: Stack(
-                          children: [
-                            Align(
-                              alignment: Alignment.topLeft,
-                              child: RotatedBox(
-                                quarterTurns: 0,
-                                child: Corner(loading: _searchLoading),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: RotatedBox(
-                                quarterTurns: 1,
-                                child: Corner(loading: _searchLoading),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: RotatedBox(
-                                quarterTurns: 3,
-                                child: Corner(loading: _searchLoading),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: RotatedBox(
-                                quarterTurns: 2,
-                                child: Corner(loading: _searchLoading),
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              duration: Duration(milliseconds: 200),
-                              opacity: _searchLoading ? 1 : 0,
-                              child: Center(
-                                child: LoadingIndicator(
-                                  indicatorType: Indicator.ballScale,
-                                  colors: [
-                                    CupertinoTheme.of(context).primaryColor
-                                  ],
-                                  strokeWidth: 50,
-                                ),
-                              ),
-                            ),
-                          ],
+            child: _isActive
+                ? CupertinoButton(
+                    padding: const EdgeInsets.all(0),
+                    onPressed: _permissionEnabled == true
+                        ? null
+                        : () => openAppSettings(),
+                    child: Stack(
+                      children: [
+                        Container(
+                          child: _drawCamera(),
+                          clipBehavior: Clip.hardEdge,
+                          decoration: BoxDecoration(),
                         ),
-                      ),
+                        AnimatedOpacity(
+                          curve: Curves.bounceInOut,
+                          opacity: _searchLoading
+                              ? 1
+                              : _cameraIsVisible
+                                  ? 0.4
+                                  : 0,
+                          duration: Duration(
+                              milliseconds: _searchLoading ? 200 : 1000),
+                          child: ColorFiltered(
+                            colorFilter: ColorFilter.mode(
+                              Color.fromRGBO(255, 255, 255, 0.8),
+                              BlendMode.srcOut,
+                            ),
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.black,
+                                    backgroundBlendMode: BlendMode.dstOut,
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: AnimatedContainer(
+                                    curve: Curves.easeOutQuart,
+                                    duration: Duration(milliseconds: 500),
+                                    height: _searchLoading == false
+                                        ? _captureHoleHeight - 30
+                                        : 0,
+                                    width: _searchLoading == false
+                                        ? _captureHoleWidth - 30
+                                        : 0,
+                                    decoration: BoxDecoration(
+                                      color: CupertinoColors.destructiveRed,
+                                      borderRadius: BorderRadius.circular(
+                                          _searchLoading == false ? 20 : 100),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          curve: Curves.ease,
+                          opacity: _cameraIsVisible ? 1 : 0,
+                          duration: Duration(milliseconds: 2000),
+                          child: Center(
+                            child: Container(
+                              // height: 280,
+                              // width: 230,
+                              height: _captureHoleHeight,
+                              width: _captureHoleWidth,
+                              child: Stack(
+                                children: [
+                                  Align(
+                                    alignment: Alignment.topLeft,
+                                    child: RotatedBox(
+                                      quarterTurns: 0,
+                                      child: Corner(loading: _searchLoading),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: RotatedBox(
+                                      quarterTurns: 1,
+                                      child: Corner(loading: _searchLoading),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: RotatedBox(
+                                      quarterTurns: 3,
+                                      child: Corner(loading: _searchLoading),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: RotatedBox(
+                                      quarterTurns: 2,
+                                      child: Corner(loading: _searchLoading),
+                                    ),
+                                  ),
+                                  AnimatedOpacity(
+                                    duration: Duration(milliseconds: 200),
+                                    opacity: _searchLoading ? 1 : 0,
+                                    child: Center(
+                                      child: LoadingIndicator(
+                                        indicatorType: Indicator.ballScale,
+                                        colors: [
+                                          CupertinoTheme.of(context)
+                                              .primaryColor
+                                        ],
+                                        strokeWidth: 50,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
+                  )
+                : Container(),
+          ),
+          AnimatedOpacity(
+            opacity: _cameraIsVisible ? 0 : 1,
+            duration: Duration(milliseconds: 1000),
+            child: Container(
+              height: _viewportHeight - 190,
+              width: _viewportWidth,
+              color: CupertinoColors.darkBackgroundGray,
             ),
           ),
           SafeArea(
             child: Align(
               alignment: Alignment.topRight,
               child: CupertinoButton(
-                onPressed: () => Navigator.of(context).push(
-                  CupertinoPageRoute(
-                    builder: (context) => About(),
-                  ),
-                ),
+                onPressed: () async {
+                  bool isDesactivate = false;
+
+                  Future.delayed(
+                    Duration(milliseconds: 500),
+                    () => setState(
+                      () {
+                        _isActive = false;
+                        _cameraIsVisible = false;
+                        _cameraReloading = false;
+                      },
+                    ),
+                  ).then((value) => isDesactivate = true);
+
+                  await Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (context) => About(),
+                    ),
+                  );
+
+                  Future.delayed(
+                    Duration(milliseconds: isDesactivate ? 300 : 500),
+                    () {
+                      setState(
+                        () {
+                          _isActive = true;
+                        },
+                      );
+                    },
+                  );
+                },
                 padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
                 child: Icon(
                   CupertinoIcons.info_circle,
@@ -408,28 +473,48 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                   ),
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, anotherAnimation) =>
-                              Search(),
-                          fullscreenDialog: true,
-                          reverseTransitionDuration:
-                              Duration(milliseconds: 350),
-                          transitionDuration: Duration(milliseconds: 500),
-                          transitionsBuilder:
-                              (context, animation, anotherAnimation, child) {
-                            animation = CurvedAnimation(
-                              curve: Curves.linearToEaseOut,
-                              parent: animation,
-                            );
-                            return SlideTransition(
-                              position: Tween(
-                                begin: Offset(0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).animate(animation),
-                              child: child,
-                            );
+                    onPressed: () async {
+                      setState(() {
+                        _isActive = false;
+                        _cameraIsVisible = false;
+                        _cameraReloading = false;
+                      });
+                      await Future.delayed(
+                        Duration(milliseconds: 100),
+                        () async => await Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, anotherAnimation) =>
+                                    Search(),
+                            fullscreenDialog: true,
+                            transitionDuration: Duration(milliseconds: 500),
+                            reverseTransitionDuration:
+                                Duration(milliseconds: 350),
+                            transitionsBuilder:
+                                (context, animation, anotherAnimation, child) {
+                              animation = CurvedAnimation(
+                                curve: Curves.linearToEaseOut,
+                                parent: animation,
+                              );
+                              return SlideTransition(
+                                position: Tween(
+                                  begin: Offset(0, 1),
+                                  end: Offset(0.0, 0.0),
+                                ).animate(animation),
+                                child: child,
+                              );
+                            },
+                          ),
+                        ),
+                      );
+
+                      Future.delayed(
+                        Duration(milliseconds: 350),
+                        () => setState(
+                          () {
+                            _isActive = true;
+                            _cameraIsVisible = true;
+                            _cameraReloading = true;
                           },
                         ),
                       );

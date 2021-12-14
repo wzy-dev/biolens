@@ -48,7 +48,6 @@ class MyVision {
       required List<DenseProduct> dataProducts,
       required QuerySnapshot data,
     }) {
-      print(recognisedText.text);
       List<VisionSearchList> searchList = [];
 
       List<String> dataNames = [];
