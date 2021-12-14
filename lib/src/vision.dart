@@ -9,10 +9,19 @@ import 'package:path/path.dart';
 import 'package:diacritic/diacritic.dart';
 
 class DenseProduct {
-  const DenseProduct({required this.name, required this.brand});
+  const DenseProduct(
+      {required this.name, required this.tagPicture, required this.brand});
 
   final String name;
+  final String? tagPicture;
   final String brand;
+}
+
+class VisionSearchList {
+  const VisionSearchList({required this.type, required this.rating});
+
+  final String type;
+  final Rating rating;
 }
 
 class MyVision {
@@ -27,7 +36,6 @@ class MyVision {
           listText.add(line.text);
         });
       });
-
       return listText;
     }
 
@@ -40,41 +48,75 @@ class MyVision {
       required List<DenseProduct> dataProducts,
       required QuerySnapshot data,
     }) {
-      List<Rating> searchList = [];
+      print(recognisedText.text);
+      List<VisionSearchList> searchList = [];
+
+      List<String> dataNames = [];
+      List<String?> dataTags = [];
+
+      dataProducts.forEach((product) => dataNames.add(product.name));
+
+      dataProducts.forEach((product) => dataTags.add(product.tagPicture));
+
       _getWordsList(recognisedText).forEach(
         (e) {
-          List<Rating> _scores = [];
-          dataProducts.map((product) {
-            _scores.add(Rating(
-                target: product.name,
-                rating: StringSimilarity.compareTwoStrings(
-                    _prepareWord(e.replaceAll(product.brand, "")),
-                    product.name)));
-          });
+          // List<Rating> _scores = [];
+          // dataProducts.forEach((product) {
+          //   print("$e / ${_prepareWord(e.replaceAll(product.brand, ''))}");
+          //   _scores.add(Rating(
+          //       target: product.name,
+          //       rating: StringSimilarity.compareTwoStrings(
+          //           _prepareWord(e.replaceAll(product.brand, "")),
+          //           product.name)));
+          // });
 
-          _scores.sort((a, b) {
-            double aRating = a.rating!;
-            double bRating = b.rating!;
-            return bRating.compareTo(aRating);
-          });
+          // _scores.sort((a, b) {
+          //   double aRating = a.rating!;
+          //   double bRating = b.rating!;
+          //   return bRating.compareTo(aRating);
+          // });
 
-          searchList.add(_scores[0]
-              // _prepareWord(e).bestMatch(dataNames).bestMatch,
-              );
+          searchList.add(
+            VisionSearchList(
+                type: "name",
+                rating: _prepareWord(e).bestMatch(dataNames).bestMatch),
+          );
+          searchList.add(
+            VisionSearchList(
+                type: "tagPicture",
+                rating: _prepareWord(e).bestMatch(dataTags).bestMatch),
+          );
         },
       );
 
       searchList.sort((a, b) {
-        double aRating = a.rating!;
-        double bRating = b.rating!;
+        double aRating = a.rating.rating!;
+        double bRating = b.rating.rating!;
         return bRating.compareTo(aRating);
       });
 
-      if (searchList.length > 0 && searchList[0].rating! > 0.5) {
-        return data.docs
-            .firstWhere((QueryDocumentSnapshot document) =>
-                _prepareWord(document['name']) == searchList[0].target!)
-            .data();
+      if (searchList.length > 0 && searchList[0].rating.rating! > 0.5) {
+        double bestScore = searchList[0].rating.rating!;
+        List<VisionSearchList> bestList = searchList
+            .where((element) => element.rating.rating == bestScore)
+            .toList();
+
+        bestList.sort((a, b) {
+          String? aName = a.rating.target;
+          String? bName = b.rating.target;
+          if (aName == null || bName == null) return 0;
+
+          return bName.length.compareTo(aName.length);
+        });
+        VisionSearchList bestSearch = bestList[0];
+
+        return data.docs.firstWhere((QueryDocumentSnapshot document) {
+          Map<String, dynamic> product =
+              document.data() as Map<String, dynamic>;
+          if (product[bestSearch.type] == null) return false;
+          return _prepareWord(product[bestSearch.type]!) ==
+              bestSearch.rating.target!;
+        }).data();
       }
     }
 
@@ -109,10 +151,15 @@ class MyVision {
       final RecognisedText recognisedText0 = futures[1];
 
       _products.docs.forEach((DocumentSnapshot document) {
+        Map<String, dynamic> product = document.data() as Map<String, dynamic>;
+
         _listProducts.add(
           DenseProduct(
-            name: _prepareWord(document['name']),
-            brand: _prepareWord(document['brand']),
+            name: _prepareWord(product['name']),
+            tagPicture: product['tagPicture'] != null
+                ? _prepareWord(product['tagPicture'])
+                : null,
+            brand: _prepareWord(product['brand']),
           ),
         );
       });

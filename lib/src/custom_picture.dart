@@ -49,30 +49,15 @@ class _CustomPictureState extends State<CustomPicture> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: CupertinoColors.white,
-        borderRadius: BorderRadius.all(
-          Radius.circular(10),
-        ),
-      ),
-      height: 150,
-      width: 150,
-      padding: EdgeInsets.all(10),
-      child: Center(
-        child: _pictureUrl != null
-            ? CachedNetworkImage(
-                imageUrl: _pictureUrl!,
-                fadeInDuration: widget.duration,
-                fit: BoxFit.cover,
-                height: 150,
-                width: 150,
-                errorWidget:
-                    (BuildContext context, String string, dynamic dynamic) =>
-                        Container(),
-              )
-            : Container(),
-      ),
-    );
+    return _pictureUrl != null
+        ? CachedNetworkImage(
+            imageUrl: _pictureUrl!,
+            fadeInDuration: widget.duration,
+            fit: BoxFit.cover,
+            errorWidget:
+                (BuildContext context, String string, dynamic dynamic) =>
+                    Container(),
+          )
+        : Container();
   }
 }

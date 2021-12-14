@@ -81,71 +81,69 @@ class _ProductState extends State<Product> {
                             ),
                             height: 150,
                             width: 150,
-                            padding: EdgeInsets.all(10),
+                            padding: EdgeInsets.all(5),
                             child: Center(
-                                child: widget.product['picture'] == null
-                                    ? Image(
-                                        image:
-                                            AssetImage("assets/camera_off.png"),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : CustomPicture(
-                                        picture: widget.product['picture'],
-                                      )),
+                              child: widget.product['picture'] == null
+                                  ? Image(
+                                      image:
+                                          AssetImage("assets/camera_off.png"),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : CustomPicture(
+                                      picture: widget.product['picture'],
+                                    ),
+                            ),
                           ),
                         ),
                         SizedBox(
                           width: 10,
                         ),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.bottomLeft,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 5),
-                                    child: RichText(
-                                      text: new TextSpan(
-                                        children: <TextSpan>[
-                                          new TextSpan(
-                                            text:
-                                                "${widget.product['name'].toUpperCase()} ",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              color: CupertinoColors
-                                                  .darkBackgroundGray,
-                                              fontSize: 23,
-                                            ),
-                                          ),
-                                          new TextSpan(
-                                            text: widget.product['brand'],
-                                            style: TextStyle(
-                                              fontStyle: FontStyle.italic,
-                                              color: CupertinoColors
-                                                  .darkBackgroundGray,
-                                            ),
-                                          ),
-                                        ],
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: RichText(
+                                text: new TextSpan(
+                                  children: [
+                                    new TextSpan(
+                                      text:
+                                          "${widget.product['name'].toUpperCase()} ",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            CupertinoColors.darkBackgroundGray,
+                                        fontSize: 23,
                                       ),
                                     ),
-                                  ),
+                                    new TextSpan(
+                                      text: widget.product['brand'],
+                                      style: TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        color:
+                                            CupertinoColors.darkBackgroundGray,
+                                      ),
+                                    ),
+                                    new TextSpan(
+                                      text: '\n',
+                                      style: const TextStyle(
+                                        fontSize: 20.0,
+                                      ),
+                                    ),
+                                    new TextSpan(
+                                      text: widget.product['names']['category']
+                                              .toLowerCase() +
+                                          ' > ' +
+                                          widget.product['names']['subCategory']
+                                              .toLowerCase(),
+                                      style: TextStyle(
+                                          color: CupertinoColors.systemGrey,
+                                          fontSize: 17),
+                                    )
+                                  ],
                                 ),
                               ),
-                              Expanded(
-                                child: Text(
-                                  widget.product['names']['category']
-                                          .toLowerCase() +
-                                      ' > ' +
-                                      widget.product['names']['subCategory']
-                                          .toLowerCase(),
-                                  style: TextStyle(
-                                      color: CupertinoColors.systemGrey,
-                                      fontSize: 17),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],

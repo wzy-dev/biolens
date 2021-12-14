@@ -132,18 +132,20 @@ class _ItemState extends State<Item> {
                 ),
                 height: 80,
                 width: 80,
-                padding: EdgeInsets.all(5),
                 child: Center(
                   child: _pictureUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: _pictureUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: (BuildContext context, String string,
-                                  dynamic dynamic) =>
-                              Container(),
+                      ? Padding(
+                          padding: EdgeInsets.all(5),
+                          child: CachedNetworkImage(
+                            imageUrl: _pictureUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (BuildContext context, String string,
+                                    dynamic dynamic) =>
+                                Container(),
+                          ),
                         )
                       : Padding(
-                          padding: const EdgeInsets.all(15),
+                          padding: EdgeInsets.all(15),
                           child: Image(
                             image: AssetImage("assets/camera_off.png"),
                             fit: BoxFit.cover,
