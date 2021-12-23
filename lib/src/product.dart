@@ -1,7 +1,8 @@
 import 'package:biolens/shelf.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 class Product extends StatefulWidget {
   const Product({
@@ -17,10 +18,23 @@ class Product extends StatefulWidget {
 
 class _ProductState extends State<Product> {
   ScrollController _scrollController = ScrollController();
-
+  bool _transitionIsRunning = true;
   double? _defaultHeaderHeight;
   double? _headerHeight;
   GlobalKey _headerKey = GlobalKey();
+  late Future<QuerySnapshot> _listTagsCollection;
+
+  @override
+  void initState() {
+    _listTagsCollection = FirebaseFirestore.instance
+        .collection('tags')
+        .where("enabled", isEqualTo: true)
+        .orderBy("name")
+        .get();
+    Future.delayed(
+        Duration(milliseconds: 200), () => _transitionIsRunning = false);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +44,22 @@ class _ProductState extends State<Product> {
         border: Border.all(width: 0, color: CupertinoColors.white),
         middle: Text(
           widget.product['name'].toUpperCase(),
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20,
             color: CupertinoColors.darkBackgroundGray,
           ),
+        ),
+        padding: const EdgeInsetsDirectional.all(0),
+        trailing: Container(
+          margin: const EdgeInsets.only(right: 8),
+          child: CupertinoButton(
+              minSize: 0,
+              padding: const EdgeInsets.all(0),
+              child: Icon(Icons.clear, size: 30),
+              onPressed: () =>
+                  Navigator.of(context).popUntil(ModalRoute.withName('/'))),
         ),
       ),
       backgroundColor: Color.fromRGBO(241, 246, 249, 1),
@@ -89,9 +114,21 @@ class _ProductState extends State<Product> {
                                           AssetImage("assets/camera_off.png"),
                                       fit: BoxFit.cover,
                                     )
-                                  : CustomPicture(
-                                      picture: widget.product['picture'],
+                                  : Padding(
+                                      padding: EdgeInsets.all(5),
+                                      child: CachedNetworkImage(
+                                        imageUrl:
+                                            "https://firebasestorage.googleapis.com/v0/b/biolens-ef25c.appspot.com/o/uploads%2F${widget.product['picture']!}?alt=media",
+                                        fit: BoxFit.cover,
+                                        errorWidget: (BuildContext context,
+                                                String string,
+                                                dynamic dynamic) =>
+                                            Container(),
+                                      ),
                                     ),
+                              // : CustomPicture(
+                              //     picture: widget.product['picture'],
+                              //   ),
                             ),
                           ),
                         ),
@@ -153,9 +190,10 @@ class _ProductState extends State<Product> {
               ),
             ),
             Expanded(
-              child: NotificationListener(
+              child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  if (_headerKey.currentContext != null) {
+                  if (_headerKey.currentContext != null &&
+                      !_transitionIsRunning) {
                     RenderBox render = _headerKey.currentContext!
                         .findRenderObject() as RenderBox;
                     if (_defaultHeaderHeight == null) {
@@ -207,7 +245,7 @@ class _ProductState extends State<Product> {
                       icon: Icons.biotech,
                     ),
                     Container(
-                      margin: EdgeInsets.fromLTRB(30, 30, 30, 0),
+                      margin: EdgeInsets.fromLTRB(30, 30, 30, 30),
                       width: double.infinity,
                       child: widget.product['cookbook'] != null &&
                               widget.product['cookbook'].length > 0
@@ -244,7 +282,14 @@ class _ProductState extends State<Product> {
                           : Container(),
                     ),
                     SizedBox(
-                      height: 10,
+                      height: 20,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: _drawTagsList(),
+                    ),
+                    SizedBox(
+                      height: 80,
                     ),
                   ],
                 ),
@@ -252,6 +297,151 @@ class _ProductState extends State<Product> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  FutureBuilder _drawTagsList() {
+    return FutureBuilder<QuerySnapshot>(
+        future: _listTagsCollection,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return SizedBox();
+          }
+
+          List<QueryDocumentSnapshot>? listTags = snapshot.data?.docs
+              .where((tag) =>
+                  (widget.product["ids"]["tags"] ?? []).contains(tag.id))
+              .toList();
+
+          if (listTags == null) return SizedBox();
+
+          return Wrap(
+            spacing: 20,
+            runSpacing: 15,
+            alignment: WrapAlignment.center,
+            children: [
+              Text(
+                "tags :",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(100, 55, 104, 180),
+                ),
+              ),
+              ...listTags.map<Widget>(
+                (tag) {
+                  Map<String, dynamic> mappedTag =
+                      tag.data() as Map<String, dynamic>;
+
+                  return CupertinoButton(
+                    minSize: 0,
+                    padding: const EdgeInsets.all(0),
+                    onPressed: () => showModalBottomSheet(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        context: context,
+                        builder: (context) => _modalContentBuilder(
+                              context,
+                              tag.id,
+                              mappedTag["name"],
+                            )),
+                    child: Text(
+                      mappedTag["name"].toLowerCase(),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(100, 129, 144, 167),
+                      ),
+                    ),
+                  );
+                },
+              ).toList()
+            ],
+          );
+        });
+  }
+
+  Widget _modalContentBuilder(
+      BuildContext context, String tagId, String tagName) {
+    Future<QuerySnapshot> listProducts = FirebaseFirestore.instance
+        .collection('products')
+        .where("ids.tags", arrayContains: tagId)
+        .where("enabled", isEqualTo: true)
+        .orderBy("name")
+        .get();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      child: FutureBuilder<QuerySnapshot>(
+        future: listProducts,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CupertinoActivityIndicator(),
+              ),
+            );
+          }
+          List<QueryDocumentSnapshot> listId = snapshot.data?.docs ?? [];
+
+          return Column(
+            children: [
+              Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
+                    child: Text(
+                      tagName,
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  )),
+              Expanded(
+                child: ShaderMask(
+                  shaderCallback: (Rect rect) {
+                    return LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        CupertinoColors.white,
+                        Color.fromRGBO(0, 0, 0, 0),
+                        Color.fromRGBO(0, 0, 0, 0),
+                        CupertinoColors.white
+                      ],
+                      stops: [0.0, 0.02, 0.98, 1.0],
+                    ).createShader(rect);
+                  },
+                  blendMode: BlendMode.dstOut,
+                  child: ListView.separated(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    itemBuilder: (context, index) {
+                      Map<String, dynamic> product =
+                          listId[index].data() as Map<String, dynamic>;
+                      product["id"] = listId[index].id;
+                      return Item(
+                          data: product, index: index, length: listId.length);
+                    },
+                    itemCount: listId.length,
+                    separatorBuilder: (BuildContext context, int index) =>
+                        SizedBox(
+                      height: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

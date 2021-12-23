@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:biolens/shelf.dart';

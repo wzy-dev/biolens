@@ -2,7 +2,6 @@ import 'package:biolens/shelf.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -185,11 +184,12 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      initialRoute: '/',
       supportedLocales: [Locale('fr', 'FR')],
       title: 'biolens',
       theme: CupertinoThemeData(
         brightness: Brightness.light,
-        primaryColor: Color.fromRGBO(55, 104, 180, 1),
+        primaryColor: Color.fromARGB(255, 55, 104, 180),
       ),
       home: _home ??
           CupertinoPageScaffold(

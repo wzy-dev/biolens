@@ -102,6 +102,8 @@ class _SearchState extends State<Search> {
                           width: double.infinity,
                           height: 60,
                           child: CupertinoTextField(
+                            autocorrect: false,
+                            enableSuggestions: false,
                             focusNode: _focusSearch,
                             controller: _searchController,
                             onChanged: (value) {
@@ -163,7 +165,8 @@ class _SearchState extends State<Search> {
                           child: AnimatedOpacity(
                             duration: Duration(milliseconds: 300),
                             opacity: (_visible ? 1 : 0),
-                            child: ProductsList(results: _searchResults),
+                            child: ProductsList(
+                                results: _searchResults, popAction: _popAction),
                           ),
                         ),
                       ),

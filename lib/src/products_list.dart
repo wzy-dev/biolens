@@ -2,31 +2,40 @@ import 'package:biolens/shelf.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 
-class ProductsList extends StatelessWidget {
-  const ProductsList({Key? key, required this.results}) : super(key: key);
+class ProductsList extends StatefulWidget {
+  const ProductsList({Key? key, required this.results, required this.popAction})
+      : super(key: key);
 
   final Map results;
+  final Function popAction;
+
+  @override
+  State<ProductsList> createState() => _ProductsListState();
+}
+
+class _ProductsListState extends State<ProductsList> {
+  bool _duringPop = false;
+
+  _itemBuilder(context, index) {
+    Map _data = widget.results['data'][index];
+
+    return Item(
+        data: _data, index: index, length: widget.results['data']?.length ?? 0);
+  }
 
   @override
   Widget build(BuildContext context) {
-    _itemBuilder(context, index) {
-      Map _data = results['data'][index];
-
-      return Item(
-          data: _data, index: index, length: results['data']?.length ?? 0);
-    }
-
     return Column(
       children: [
         Container(
             width: double.infinity,
-            child: (results['header'] != null &&
-                    results['data'] != null &&
-                    results['data'].length > 0
+            child: (widget.results['header'] != null &&
+                    widget.results['data'] != null &&
+                    widget.results['data'].length > 0
                 ? Padding(
                     padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
                     child: Text(
-                      results['header'],
+                      widget.results['header'],
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.w700,
@@ -51,12 +60,27 @@ class ProductsList extends StatelessWidget {
               ).createShader(rect);
             },
             blendMode: BlendMode.dstOut,
-            child: ListView.separated(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              itemBuilder: (context, index) => _itemBuilder(context, index),
-              itemCount: results['data']?.length ?? 0,
-              separatorBuilder: (BuildContext context, int index) => SizedBox(
-                height: 20,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification notification) {
+                // print("extentAfter: ${notification.metrics.extentAfter}");
+                // print("max: ${notification.metrics.maxScrollExtent}");
+                if (notification.metrics.extentAfter -
+                            notification.metrics.maxScrollExtent >
+                        150 &&
+                    !_duringPop) {
+                  _duringPop = true;
+                  widget.popAction();
+                }
+                return false;
+              },
+              child: ListView.separated(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                itemBuilder: (context, index) => _itemBuilder(context, index),
+                itemCount: widget.results['data']?.length ?? 0,
+                separatorBuilder: (BuildContext context, int index) => SizedBox(
+                  height: 20,
+                ),
               ),
             ),
           ),
