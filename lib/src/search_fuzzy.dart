@@ -1,17 +1,23 @@
 // ignore: import_of_legacy_library_into_null_safe
+import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class BestResultList {
+  const BestResultList({this.products, this.tags});
+
+  final Map<String, dynamic>? products;
+  final Map<String, dynamic>? tags;
+}
+
 class SearchFuzzy {
   static Map searchByName({
     required String query,
-    // [products, indications, category, tags]
+    // [products, tags]
     required List? listSnapshots,
   }) {
     List<Map> _searchListProduct = [];
-    // List<Map> _searchListIndication = [];
-    // List<Map> _searchListCategory = [];
     List<Map> _searchListTag = [];
 
     if (listSnapshots == null) return {};
@@ -21,18 +27,6 @@ class SearchFuzzy {
       Map _data = (document.data() as Map);
       _searchListProduct.add({..._data, 'id': document.id});
     });
-
-    // // Indications
-    // listSnapshots[1].docs.forEach((DocumentSnapshot document) {
-    //   Map _data = (document.data() as Map);
-    //   _searchListIndication.add({..._data, 'id': document.id});
-    // });
-
-    // // Category
-    // listSnapshots[1].docs.forEach((DocumentSnapshot document) {
-    //   Map _data = (document.data() as Map);
-    //   _searchListCategory.add({..._data, 'id': document.id});
-    // });
 
     // Tag
     listSnapshots[1].docs.forEach((DocumentSnapshot document) {
@@ -53,45 +47,49 @@ class SearchFuzzy {
     );
 
     final fuseProduct = Fuzzy(_searchListProduct, options: options);
-    // final fuseIndication = Fuzzy(_searchListIndication, options: options);
-    // final fuseCategory = Fuzzy(_searchListCategory, options: options);
     final fuseTag = Fuzzy(_searchListTag, options: options);
 
-    final List resultProduct = fuseProduct.search(query);
-    // final List resultIndication = fuseIndication.search(query);
-    // final List resultCategory = fuseCategory.search(query);
-    final List resultTag = fuseTag.search(query);
+    final List<Result> resultProduct = fuseProduct.search(query);
+    final List<Result> resultTag = fuseTag.search(query);
 
     Map result = {};
 
     List data = [];
 
     Map? bestResult;
-    List bestResultsList = [
-      resultProduct.length > 0
+    BestResultList bestResultsList = BestResultList(
+      products: resultProduct.length > 0
           ? {
               'collection': 'products',
               'data': resultProduct[0],
+              'score': resultProduct[0].score
             }
           : null,
-      // resultIndication.length > 0
-      //     ? {'collection': 'indications', 'data': resultIndication[0]}
-      //     : null,
-      // resultCategory.length > 0
-      //     ? {'collection': 'categories', 'data': resultCategory[0]}
-      //     : null,
-      resultTag.length > 0
-          ? {'collection': 'tags', 'data': resultTag[0]}
+      tags: resultTag.length > 0
+          ? {
+              'collection': 'tags',
+              'data': resultTag[0],
+              'score': resultTag[0].score
+            }
           : null,
-    ];
+    );
 
-    bestResultsList.removeWhere((element) => element == null);
-    bestResultsList.sort((a, b) {
-      if (a == null) return 0;
-      if (b == null) return 1;
-      return a['data'].score.compareTo(b['data'].score);
-    });
-    if (bestResultsList.length > 0) bestResult = bestResultsList[0];
+    if (query == "") {
+      bestResult = bestResultsList.products;
+    } else if (bestResultsList.products != null) {
+      if (bestResultsList.tags != null) {
+        if (bestResultsList.products!["score"] <
+            bestResultsList.tags!["score"]) {
+          bestResult = bestResultsList.products;
+        } else {
+          bestResult = bestResultsList.tags;
+        }
+      } else {
+        bestResult = bestResultsList.products;
+      }
+    } else if (bestResultsList.tags != null) {
+      bestResult = bestResultsList.tags;
+    }
 
     const Map correspondence = {
       'indications': 'indications',
