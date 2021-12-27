@@ -178,14 +178,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return CupertinoApp(
-      debugShowCheckedModeBanner: false,
+      // debugShowCheckedModeBanner: false,
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      initialRoute: '/',
       supportedLocales: [Locale('fr', 'FR')],
+      initialRoute: '/',
       title: 'biolens',
       theme: CupertinoThemeData(
         brightness: Brightness.light,
