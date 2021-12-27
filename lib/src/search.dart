@@ -83,7 +83,15 @@ class _SearchState extends State<Search> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _popAction();
+        if (_searchController.text.length > 0) {
+          setState(() {
+            _searchController.text = "";
+            _searchResults = SearchFuzzy.searchByName(
+                query: "", listSnapshots: _listSnapshots);
+          });
+        } else {
+          _popAction();
+        }
         return false;
       },
       child: CupertinoPageScaffold(
