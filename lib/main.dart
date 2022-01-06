@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 Future<void> main() async {
   //For Firebase
@@ -86,6 +87,9 @@ class _MyAppState extends State<MyApp> {
 
               FirebaseFirestore.instance.disableNetwork().then((value) {
                 print('disable');
+
+                FirebaseAnalytics.instance.logAppOpen();
+
                 setState(() {
                   _home = Homepage();
                 });

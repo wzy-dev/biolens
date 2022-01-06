@@ -1,8 +1,10 @@
 import 'package:biolens/shelf.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Product extends StatefulWidget {
   const Product({
@@ -26,6 +28,9 @@ class _ProductState extends State<Product> {
 
   @override
   void initState() {
+    FirebaseAnalytics.instance.logScreenView(
+        screenClass: "product", screenName: widget.product["name"]);
+
     _listTagsCollection = FirebaseFirestore.instance
         .collection('tags')
         .where("enabled", isEqualTo: true)
@@ -276,7 +281,42 @@ class _ProductState extends State<Product> {
                                       ),
                                     );
                                   }).toList(),
-                                )
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 15.0),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "Source :",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: CupertinoColors.systemGrey,
+                                            fontSize: 15),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: CupertinoButton(
+                                          minSize: 0,
+                                          alignment: Alignment.centerLeft,
+                                          padding: const EdgeInsets.all(0),
+                                          onPressed: widget.product["source"] !=
+                                                      null &&
+                                                  Uri.parse(widget
+                                                          .product["source"])
+                                                      .isAbsolute
+                                              ? () => launch(
+                                                  widget.product["source"])
+                                              : null,
+                                          child: _drawSource(
+                                            name: widget.product["name"],
+                                            brand: widget.product["brand"],
+                                            source: widget.product["source"],
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
                               ],
                             )
                           : Container(),
@@ -298,6 +338,47 @@ class _ProductState extends State<Product> {
           ],
         ),
       ),
+    );
+  }
+
+  RichText _drawSource(
+      {required String name, required String brand, String? source}) {
+    return RichText(
+      text: new TextSpan(
+          style: TextStyle(
+              color: source != null && Uri.parse(source).isAbsolute
+                  ? CupertinoTheme.of(context).primaryColor
+                  : CupertinoColors.systemGrey,
+              fontSize: 15),
+          children: source != null
+              ? Uri.parse(source).isAbsolute
+                  ? [
+                      new TextSpan(
+                        text: "Manuel d'utilisation $name ",
+                      ),
+                      new TextSpan(
+                        text: "($brand)",
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ]
+                  : [
+                      new TextSpan(
+                        text: source,
+                      ),
+                    ]
+              : [
+                  new TextSpan(
+                    text: "Manuel d'utilisation $name ",
+                  ),
+                  new TextSpan(
+                    text: "($brand)",
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ]),
     );
   }
 

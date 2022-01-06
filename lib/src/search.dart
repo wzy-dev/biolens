@@ -1,4 +1,5 @@
 import 'package:biolens/shelf.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,6 +21,9 @@ class _SearchState extends State<Search> {
   @override
   void initState() {
     super.initState();
+
+    FirebaseAnalytics.instance
+        .logScreenView(screenClass: "search", screenName: "search");
 
     List<Future> query = [
       FirebaseFirestore.instance
@@ -71,6 +75,7 @@ class _SearchState extends State<Search> {
   }
 
   void _popAction() {
+    FirebaseAnalytics.instance.logSearch(searchTerm: _searchController.text);
     setState(() {
       _visible = false;
     });
@@ -84,6 +89,8 @@ class _SearchState extends State<Search> {
     return WillPopScope(
       onWillPop: () async {
         if (_searchController.text.length > 0) {
+          FirebaseAnalytics.instance
+              .logSearch(searchTerm: _searchController.text);
           setState(() {
             _searchController.text = "";
             _searchResults = SearchFuzzy.searchByName(
@@ -112,6 +119,7 @@ class _SearchState extends State<Search> {
                           child: CupertinoTextField(
                             autocorrect: false,
                             enableSuggestions: false,
+                            keyboardType: TextInputType.name,
                             focusNode: _focusSearch,
                             controller: _searchController,
                             onChanged: (value) {

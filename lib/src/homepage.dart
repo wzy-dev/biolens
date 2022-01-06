@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:biolens/shelf.dart';
@@ -50,6 +51,8 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   void initState() {
     _setDirectory();
     WidgetsBinding.instance!.addObserver(this);
+    FirebaseAnalytics.instance
+        .logScreenView(screenClass: "scanner", screenName: "scanner");
 
     super.initState();
   }
@@ -61,6 +64,9 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   }
 
   void _toScan() {
+    FirebaseAnalytics.instance
+        .logEvent(name: "to_scan", parameters: {"step": "loading"});
+
     if (cacheDirectory == null) return;
 
     setState(() {
@@ -85,7 +91,12 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
         setState(() {
           _searchLoading = false;
         });
-        if (value == null) return;
+        if (value == null) {
+          FirebaseAnalytics.instance
+              .logEvent(name: "to_scan", parameters: {"step": "fail"});
+
+          return;
+        }
 
         bool isDesactivate = false;
 
@@ -99,6 +110,10 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
             },
           ),
         ).then((value) => isDesactivate = true);
+
+        FirebaseAnalytics.instance.logEvent(
+            name: "to_scan",
+            parameters: {"step": "success", "name": value["name"]});
 
         await Navigator.of(context).push(
           CupertinoPageRoute(
@@ -120,6 +135,9 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
         );
       });
     }).timeout(Duration(seconds: 3), onTimeout: () async {
+      FirebaseAnalytics.instance
+          .logEvent(name: "to_scan", parameters: {"step": "fail"});
+
       setState(() {
         _searchLoading = false;
         _cameraIsVisible = false;
@@ -198,6 +216,14 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                           photoSize: ValueNotifier(Size(0, 0)),
                           captureMode: ValueNotifier(CaptureModes.PHOTO),
                         ),
+                        // Container(
+                        //   width: double.infinity,
+                        //   height: double.infinity,
+                        //   child: Image(
+                        //     image: AssetImage("assets/pxl.jpg"),
+                        //     fit: BoxFit.cover,
+                        //   ),
+                        // ),
                         Container(
                           color: _cameraReloading
                               ? CupertinoColors.darkBackgroundGray
@@ -507,7 +533,7 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
                       );
 
                       Future.delayed(
-                        Duration(milliseconds: 350),
+                        Duration(milliseconds: 320),
                         () => setState(
                           () {
                             _isActive = true;
