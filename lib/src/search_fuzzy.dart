@@ -100,7 +100,7 @@ class SearchFuzzy {
     if (bestResult == null || bestResult['collection'] == 'products') {
       resultProduct.forEach((element) => data.add(element.item));
     } else {
-      var item = bestResult['data'].item as Map;
+      Map item = bestResult['data'].item as Map;
 
       data = _searchListProduct.where((element) {
         if (element['ids'][correspondence[bestResult!['collection']]] == null)
@@ -109,7 +109,11 @@ class SearchFuzzy {
             .contains(item['id']);
       }).toList();
 
-      result['header'] = item['name'];
+      if (data.length == 0 && bestResult['collection'] == 'tags') {
+        resultProduct.forEach((element) => data.add(element.item));
+      } else {
+        result['header'] = item['name'];
+      }
     }
 
     result['data'] = data;

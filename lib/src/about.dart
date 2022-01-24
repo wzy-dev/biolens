@@ -86,28 +86,28 @@ class About extends StatelessWidget {
                 SizedBox(
                   width: 13,
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      color: Color.fromRGBO(181, 87, 74, 1),
-                    ),
-                    child: CupertinoButton(
-                      padding: const EdgeInsets.all(20),
-                      onPressed: () => launch("sms:33620905177"),
-                      child: Column(
-                        children: [
-                          Icon(
-                            CupertinoIcons.phone,
-                            color: CupertinoColors.white,
-                            size: 50,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                // Expanded(
+                //   flex: 1,
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //       borderRadius: BorderRadius.all(Radius.circular(10)),
+                //       color: Color.fromRGBO(181, 87, 74, 1),
+                //     ),
+                //     child: CupertinoButton(
+                //       padding: const EdgeInsets.all(20),
+                //       onPressed: () => launch("sms:33620905177"),
+                //       child: Column(
+                //         children: [
+                //           Icon(
+                //             CupertinoIcons.phone,
+                //             color: CupertinoColors.white,
+                //             size: 50,
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
             SizedBox(
