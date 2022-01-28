@@ -1,12 +1,14 @@
+import 'package:biolens/models/products/products.dart';
 import 'package:biolens/shelf.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 
 class ProductsList extends StatefulWidget {
-  const ProductsList({Key? key, required this.results, required this.popAction})
+  const ProductsList(
+      {Key? key, required this.searchedList, required this.popAction})
       : super(key: key);
 
-  final Map results;
+  final SearchedList searchedList;
   final Function popAction;
 
   @override
@@ -16,11 +18,13 @@ class ProductsList extends StatefulWidget {
 class _ProductsListState extends State<ProductsList> {
   bool _duringPop = false;
 
-  _itemBuilder(context, index) {
-    Map _data = widget.results['data'][index];
+  Item _itemBuilder(BuildContext context, int index) {
+    Product product = widget.searchedList.listProducts[index];
 
     return Item(
-        data: _data, index: index, length: widget.results['data']?.length ?? 0);
+        product: product,
+        index: index,
+        length: widget.searchedList.listProducts.length);
   }
 
   @override
@@ -29,13 +33,12 @@ class _ProductsListState extends State<ProductsList> {
       children: [
         Container(
             width: double.infinity,
-            child: (widget.results['header'] != null &&
-                    widget.results['data'] != null &&
-                    widget.results['data'].length > 0
+            child: (widget.searchedList.header != null &&
+                    widget.searchedList.listProducts.length > 0
                 ? Padding(
                     padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
                     child: Text(
-                      widget.results['header'],
+                      widget.searchedList.header!,
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.w700,
@@ -62,8 +65,6 @@ class _ProductsListState extends State<ProductsList> {
             blendMode: BlendMode.dstOut,
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification notification) {
-                // print("extentAfter: ${notification.metrics.extentAfter}");
-                // print("max: ${notification.metrics.maxScrollExtent}");
                 if (notification.metrics.extentAfter -
                             notification.metrics.maxScrollExtent >
                         150 &&
@@ -76,8 +77,9 @@ class _ProductsListState extends State<ProductsList> {
               child: ListView.separated(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                itemBuilder: (context, index) => _itemBuilder(context, index),
-                itemCount: widget.results['data']?.length ?? 0,
+                itemBuilder: (BuildContext context, int index) =>
+                    _itemBuilder(context, index),
+                itemCount: widget.searchedList.listProducts.length,
                 separatorBuilder: (BuildContext context, int index) => SizedBox(
                   height: 20,
                 ),
@@ -93,12 +95,12 @@ class _ProductsListState extends State<ProductsList> {
 class Item extends StatefulWidget {
   const Item({
     Key? key,
-    required this.data,
+    required this.product,
     required this.index,
     required this.length,
   }) : super(key: key);
 
-  final Map data;
+  final Product product;
   final int index;
   final int length;
 
@@ -115,15 +117,16 @@ class _ItemState extends State<Item> {
 
   @override
   Widget build(BuildContext context) {
-    String? filename = widget.data['picture'];
+    String? filename = widget.product.picture;
+
     _pictureUrl = filename != null ? _getPictureUrl(filename) : null;
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: () => Navigator.of(context).push(
         CupertinoPageRoute(
-          builder: (context) => Product(
-            product: widget.data,
+          builder: (context) => ProductViewer(
+            product: widget.product,
           ),
         ),
       ),
@@ -145,7 +148,7 @@ class _ItemState extends State<Item> {
         child: Row(
           children: [
             Hero(
-              tag: widget.data['id'],
+              tag: widget.product.id,
               transitionOnUserGestures: true,
               child: Container(
                 decoration: BoxDecoration(
@@ -189,7 +192,7 @@ class _ItemState extends State<Item> {
                     text: new TextSpan(
                       children: <TextSpan>[
                         new TextSpan(
-                          text: "${widget.data['name'].toUpperCase()} ",
+                          text: "${widget.product.name.toUpperCase()} ",
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: CupertinoColors.darkBackgroundGray,
@@ -197,7 +200,7 @@ class _ItemState extends State<Item> {
                           ),
                         ),
                         new TextSpan(
-                          text: widget.data['brand'],
+                          text: widget.product.brand,
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
                             color: CupertinoColors.darkBackgroundGray,
@@ -210,9 +213,9 @@ class _ItemState extends State<Item> {
                     height: 5,
                   ),
                   Text(
-                    widget.data['names']['category'].toLowerCase() +
+                    widget.product.names.category.toLowerCase() +
                         ' > ' +
-                        widget.data['names']['subCategory'].toLowerCase(),
+                        widget.product.names.subCategory.toLowerCase(),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                     style: TextStyle(

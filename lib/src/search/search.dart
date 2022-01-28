@@ -1,8 +1,16 @@
+import 'package:biolens/models/products/products.dart';
+import 'package:biolens/models/tags/tags.dart';
 import 'package:biolens/shelf.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+class ListItemsSearchable {
+  const ListItemsSearchable({this.products = const [], this.tags = const []});
+
+  final List<Product> products;
+  final List<Tag> tags;
+}
 
 class Search extends StatefulWidget {
   const Search({Key? key}) : super(key: key);
@@ -13,10 +21,10 @@ class Search extends StatefulWidget {
 
 class _SearchState extends State<Search> {
   FocusNode _focusSearch = FocusNode();
-  List? _listSnapshots;
-  bool _visible = false;
-  Map _searchResults = {};
+  bool _itemsAreVisible = false;
+  late SearchedList _searchedResults;
   TextEditingController _searchController = TextEditingController();
+  late ListItemsSearchable _listItemsSearchable;
 
   @override
   void initState() {
@@ -25,44 +33,15 @@ class _SearchState extends State<Search> {
     FirebaseAnalytics.instance
         .logScreenView(screenClass: "search", screenName: "search");
 
-    List<Future> query = [
-      FirebaseFirestore.instance
-          .collection('products')
-          .where("enabled", isEqualTo: true)
-          .orderBy("name")
-          .get(),
-      // FirebaseFirestore.instance
-      //     .collection('indications')
-      //     .where("enabled", isEqualTo: true)
-      //     .orderBy("name")
-      //     .get(),
-      // FirebaseFirestore.instance
-      //     .collection('categories')
-      //     .where("enabled", isEqualTo: true)
-      //     .orderBy("name")
-      //     .get(),
-      FirebaseFirestore.instance
-          .collection('tags')
-          .where("enabled", isEqualTo: true)
-          .orderBy("name")
-          .get(),
-    ];
-
-    Future.wait(query).then((listSnapshot) {
-      _listSnapshots = listSnapshot;
-      setState(() {
-        _searchResults =
-            SearchFuzzy.searchByName(query: '', listSnapshots: _listSnapshots);
-      });
-    });
-
+    // On affiche le clavier après un léger délais
     Future.delayed(const Duration(milliseconds: 550), () {
       _focusSearch.requestFocus();
     });
 
+    // On affiche les éléments après un délais pour les fades
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
-        _visible = true;
+        _itemsAreVisible = true;
       });
     });
   }
@@ -76,9 +55,12 @@ class _SearchState extends State<Search> {
 
   void _popAction() {
     FirebaseAnalytics.instance.logSearch(searchTerm: _searchController.text);
+
+    // Fade out des items si on pop
     setState(() {
-      _visible = false;
+      _itemsAreVisible = false;
     });
+
     Future.delayed(const Duration(milliseconds: 150), () {
       Navigator.of(context).pop();
     });
@@ -86,15 +68,38 @@ class _SearchState extends State<Search> {
 
   @override
   Widget build(BuildContext context) {
+    // On crée la liste des produits avec un listener et on la trie par nom
+    List<Product> listProducts = [
+      ...Provider.of<List<Product>>(context, listen: true)
+    ];
+    listProducts.sort((a, b) => a.name.compareTo(b.name));
+
+    // On crée la liste des tags avec un listener et on la trie par nom
+    List<Tag> listTags = [...Provider.of<List<Tag>>(context, listen: true)];
+    listTags.sort((a, b) => a.name.compareTo(b.name));
+
+    // On associes ces deux listes au sein d'un object ListItemsSearchable
+    _listItemsSearchable = ListItemsSearchable(
+      products: listProducts,
+      tags: listTags,
+    );
+
+    // On exécute la recherche en fonction de la query actuelle
+    // Au premier build query = "" > Tous les items sont affichés
+    _searchedResults = SearchFuzzy.searchByName(
+        query: _searchController.text,
+        listItemsSearchable: _listItemsSearchable);
+
     return WillPopScope(
       onWillPop: () async {
+        // Si on pop alors que le champs n'est pas vierge on le vide avant tout et on stop le pop
         if (_searchController.text.length > 0) {
           FirebaseAnalytics.instance
               .logSearch(searchTerm: _searchController.text);
           setState(() {
             _searchController.text = "";
-            _searchResults = SearchFuzzy.searchByName(
-                query: "", listSnapshots: _listSnapshots);
+            _searchedResults = SearchFuzzy.searchByName(
+                query: "", listItemsSearchable: _listItemsSearchable);
           });
         } else {
           _popAction();
@@ -123,10 +128,11 @@ class _SearchState extends State<Search> {
                             focusNode: _focusSearch,
                             controller: _searchController,
                             onChanged: (value) {
+                              // Quand on tape du text on met à jours les résultats
                               setState(() {
-                                _searchResults = SearchFuzzy.searchByName(
+                                _searchedResults = SearchFuzzy.searchByName(
                                     query: value,
-                                    listSnapshots: _listSnapshots);
+                                    listItemsSearchable: _listItemsSearchable);
                               });
                             },
                             padding: EdgeInsets.zero,
@@ -149,11 +155,13 @@ class _SearchState extends State<Search> {
                                   ? CupertinoButton(
                                       padding: const EdgeInsets.all(0),
                                       onPressed: () => setState(() {
+                                        // Quand on clique sur la croix du champs de recherche on réinitialise le champs et on effectue une recherche vide pour réafficher tous les produits
                                         _searchController.text = "";
-                                        _searchResults =
+                                        _searchedResults =
                                             SearchFuzzy.searchByName(
                                                 query: _searchController.text,
-                                                listSnapshots: _listSnapshots);
+                                                listItemsSearchable:
+                                                    _listItemsSearchable);
                                       }),
                                       child: Icon(
                                         CupertinoIcons.multiply,
@@ -176,13 +184,15 @@ class _SearchState extends State<Search> {
                       Expanded(
                         child: AnimatedPadding(
                           duration: Duration(milliseconds: 300),
-                          padding:
-                              EdgeInsets.fromLTRB(0, (_visible ? 0 : 20), 0, 0),
+                          padding: EdgeInsets.fromLTRB(
+                              0, (_itemsAreVisible ? 0 : 20), 0, 0),
                           child: AnimatedOpacity(
                             duration: Duration(milliseconds: 300),
-                            opacity: (_visible ? 1 : 0),
+                            opacity: (_itemsAreVisible ? 1 : 0),
                             child: ProductsList(
-                                results: _searchResults, popAction: _popAction),
+                              searchedList: _searchedResults,
+                              popAction: _popAction,
+                            ),
                           ),
                         ),
                       ),

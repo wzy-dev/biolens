@@ -20,7 +20,6 @@ class About extends StatelessWidget {
         ),
       ),
       child: Padding(
-        // padding: const EdgeInsets.fromLTRB(12, 40, 12, 0),
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
         child: ListView(
           children: [
