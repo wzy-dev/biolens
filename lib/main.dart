@@ -1,6 +1,8 @@
 // ignore_for_file: cancel_subscriptions
 import 'dart:async';
 
+import 'package:biolens/first_open.dart';
+import 'package:biolens/models/mydatabase.dart';
 import 'package:biolens/myinitializer.dart';
 import 'package:biolens/models/myprovider.dart';
 import 'package:biolens/shelf.dart';
@@ -12,6 +14,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqlbrite/sqlbrite.dart';
 
 Future<void> main() async {
   //For Firebase
@@ -38,54 +42,69 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  // late Future<FirebaseApp> _firebaseInitialization;
+  // late Future<Database> _databaseInitialization;
+  bool fullyInitialized = false;
+  bool? tutorialReaded;
+  late Database briteDb;
+  late Future<FirebaseApp> _firebaseInitialization;
+  late Future<Database> _databaseInitialization;
+
   @override
   void initState() {
-    Firebase.initializeApp();
+    SharedPreferences.getInstance().then(
+        (prefs) => tutorialReaded = prefs.getBool("tutorialReaded") ?? false);
+    _firebaseInitialization = Firebase.initializeApp();
+    // drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
+    _databaseInitialization = ModelMethods.initDb(drop: true);
+
+    Future.wait([
+      _databaseInitialization,
+      _firebaseInitialization,
+    ]).then((value) {
+      List list = value;
+      briteDb = list[0];
+      return FirebaseAuth.instance.signInAnonymously().then((value) {
+        if (fullyInitialized) return;
+        setState(() => fullyInitialized = true);
+      });
+    });
 
     super.initState();
   }
 
+  Future<void> _drawLanding() async {
+    // return Homepage();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("tutorialReaded", false);
+  }
+
+  void _finishTutorial() {
+    setState(() {
+      tutorialReaded = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MyInitializer(
-      onDidInitilize: (initContext, snapshot, briteDb) {
-        FirebaseAnalytics.instance.logAppOpen();
+    if (fullyInitialized == true && tutorialReaded == true) {
+      return MultiProvider(
+        key: Key(FirebaseAuth.instance.currentUser!.uid),
+        providers: MyProvider.generateProvidersList(
+            briteDb: BriteDatabase(briteDb, logger: null),
+            user: FirebaseAuth.instance.currentUser!),
+        child: CustomCupertinoApp(
+          home: Homepage(),
+        ),
+      );
+    }
 
-        // On crée un stream d'user et on le reconnecte
-        Stream<User?> _streamUser = FirebaseAuth.instance.authStateChanges();
-        FirebaseAuth.instance.signInAnonymously();
+    if (tutorialReaded != false) return FullScreenLoader();
 
-        return StreamBuilder<User?>(
-            stream: _streamUser,
-            builder: (context, snapshotUser) {
-              if (snapshotUser.connectionState != ConnectionState.active ||
-                  snapshotUser.data == null) return FullScreenLoader();
-
-              return MultiProvider(
-                key: Key(snapshotUser.data!.uid),
-                providers: MyProvider.generateProvidersList(
-                    briteDb: briteDb, user: snapshotUser.data!),
-                child: CupertinoApp(
-                  // debugShowCheckedModeBanner: false,
-                  localizationsDelegates: [
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                  ],
-                  supportedLocales: [Locale('fr', 'FR')],
-                  initialRoute: '/',
-                  title: 'biolens',
-                  theme: CupertinoThemeData(
-                    brightness: Brightness.light,
-                    primaryColor: Color.fromARGB(255, 55, 104, 180),
-                  ),
-                  home: Homepage(),
-                ),
-              );
-            });
-      },
-      onLoading: (loadingContext) => Center(
-        child: FullScreenLoader(),
+    return CustomCupertinoApp(
+      home: FirstOpen(
+        tutorialReaded: _finishTutorial,
+        loadingFinish: fullyInitialized,
       ),
     );
   }
@@ -105,6 +124,32 @@ class FullScreenLoader extends StatelessWidget {
       child: Center(
         child: CupertinoActivityIndicator(),
       ),
+    );
+  }
+}
+
+class CustomCupertinoApp extends StatelessWidget {
+  const CustomCupertinoApp({Key? key, required this.home}) : super(key: key);
+
+  final Widget home;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoApp(
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [Locale('fr', 'FR')],
+      initialRoute: '/',
+      title: 'biolens',
+      theme: CupertinoThemeData(
+        brightness: Brightness.light,
+        primaryColor: Color.fromARGB(255, 55, 104, 180),
+      ),
+      home: home,
     );
   }
 }

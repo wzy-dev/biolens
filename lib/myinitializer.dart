@@ -1,4 +1,5 @@
 import 'package:biolens/models/mydatabase.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sqlbrite/sqlbrite.dart';
@@ -22,12 +23,13 @@ class MyInitializer extends StatefulWidget {
 class _MyInitializerState extends State<MyInitializer> {
   late Future<FirebaseApp> _firebaseInitialization;
   late Future<Database> _databaseInitialization;
+  late Future<User> _firebaseAuth;
 
   @override
   void initState() {
     _firebaseInitialization = Firebase.initializeApp();
     // drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
-    _databaseInitialization = ModelMethods.initDb(drop: false);
+    _databaseInitialization = ModelMethods.initDb(drop: true);
     super.initState();
   }
 
@@ -45,10 +47,21 @@ class _MyInitializerState extends State<MyInitializer> {
                 // Once complete, show your application
                 if (snapshotFirebaseApp.connectionState ==
                     ConnectionState.done) {
-                  return widget.onDidInitilize(
-                    context,
-                    snapshotFirebaseApp,
-                    BriteDatabase(snapshotDatabase.data!, logger: null),
+                  return FutureBuilder<User>(
+                    future: _firebaseAuth,
+                    builder: (context, snapshotFirebaseAuth) {
+                      // Once complete, show your application
+                      if (snapshotFirebaseAuth.connectionState ==
+                          ConnectionState.done) {
+                        return widget.onDidInitilize(
+                          context,
+                          snapshotFirebaseAuth,
+                          BriteDatabase(snapshotDatabase.data!, logger: null),
+                        );
+                      }
+                      // Otherwise, show something whilst waiting for initialization to complete
+                      return widget.onLoading(context);
+                    },
                   );
                 }
                 // Otherwise, show something whilst waiting for initialization to complete

@@ -301,136 +301,8 @@ class _HomepageState extends State<Homepage> {
       // On affiche la dialog
       showGeneralDialog(
         context: context,
-        pageBuilder: (context, animation1, animation2) => Dialog(
-          insetPadding: EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(15))),
-          child: Container(
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                        color: Color.fromARGB(50, 167, 49, 129),
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    child: Padding(
-                      padding: const EdgeInsets.all(5),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.camera_viewfinder,
-                              size: 40,
-                              color: Color.fromARGB(255, 167, 49, 129)),
-                          Expanded(
-                            child: Center(
-                              child: new Text(
-                                "Vous avez des difficultés ?",
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 100, 27, 60),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          child: new Text(
-                            "Afin d'améliorer l'analyse, vérifiez que :",
-                            style: TextStyle(
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 6.0),
-                              child: new Text(
-                                "•",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: new Text(
-                                "le nom du produit est lisible sur le scan",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 5),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 6.0),
-                              child: new Text(
-                                "•",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: new Text(
-                                "le produit est présent dans la base des données de biolens",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: CupertinoButton(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        "J'ai compris !",
-                        textAlign: TextAlign.end,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      onPressed: () {
-                        // On note que l'utilisateur a lu la popup et on pop
-                        prefs.setBool('repetitiveFailPopupRead', true);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-        ),
+        pageBuilder: (context, animation1, animation2) =>
+            RepetitiveFailDialog(prefs: prefs),
       );
     }
   }
@@ -524,5 +396,147 @@ class _HomepageState extends State<Homepage> {
     cacheDirectory = await getTemporaryDirectory();
     cacheResizedDirectory = await Directory('${cacheDirectory!.path}/resized')
         .create(recursive: true);
+  }
+}
+
+class RepetitiveFailDialog extends StatelessWidget {
+  const RepetitiveFailDialog({
+    Key? key,
+    required this.prefs,
+  }) : super(key: key);
+
+  final SharedPreferences prefs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(15))),
+      child: Container(
+        width: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                    color: Color.fromARGB(50, 167, 49, 129),
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                child: Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.camera_viewfinder,
+                          size: 40, color: Color.fromARGB(255, 167, 49, 129)),
+                      Expanded(
+                        child: Center(
+                          child: new Text(
+                            "Vous avez des difficultés ?",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 100, 27, 60),
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 25),
+              Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      child: new Text(
+                        "Afin d'améliorer l'analyse, vérifiez que :",
+                        style: TextStyle(
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6.0),
+                          child: new Text(
+                            "•",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: new Text(
+                            "le nom du produit est lisible sur le scan",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 5),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6.0),
+                          child: new Text(
+                            "•",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: new Text(
+                            "le produit est présent dans la base des données de biolens",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: CupertinoButton(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    "J'ai compris !",
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  onPressed: () {
+                    // On note que l'utilisateur a lu la popup et on pop
+                    prefs.setBool('repetitiveFailPopupRead', true);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
