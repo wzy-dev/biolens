@@ -1,15 +1,28 @@
-import 'package:biolens/shelf.dart';
+import 'package:biolens/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class FirstOpen extends StatefulWidget {
-  const FirstOpen({Key? key, this.tutorialReaded, this.loadingFinish = true})
-      : super(key: key);
+TextStyle textStyle = TextStyle(
+  fontWeight: FontWeight.w200,
+  fontSize: 18,
+  color: CupertinoColors.white,
+);
 
-  final Function? tutorialReaded;
-  final bool loadingFinish;
+class FirstOpen extends StatefulWidget {
+  const FirstOpen({
+    Key? key,
+    this.finishTutorial,
+    this.initializationStep = InitializationStep.success,
+    this.initializer,
+    this.logger,
+  }) : super(key: key);
+
+  final void Function()? finishTutorial;
+  final void Function()? initializer;
+  final void Function()? logger;
+  final InitializationStep initializationStep;
 
   @override
   State<FirstOpen> createState() => _FirstOpenState();
@@ -20,7 +33,6 @@ class _FirstOpenState extends State<FirstOpen> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.loadingFinish);
     return CupertinoPageScaffold(
       child: Container(
         width: double.infinity,
@@ -40,17 +52,35 @@ class _FirstOpenState extends State<FirstOpen> {
         child: SafeArea(
           child: Column(
             children: [
+              // Contenu du haut
               Expanded(
                 child: Stack(
                   children: [
                     ContentTutorialFirst(pageNumber: _pageNumber),
-                    ContentTutorialSecond(pageNumber: _pageNumber),
-                    ContentTutorialThird(pageNumber: _pageNumber),
-                    ContentTutorialFourth(pageNumber: _pageNumber),
-                    ContentTutorialFifth(pageNumber: _pageNumber),
+                    _drawCarousselItemWithPicture(
+                      pageIndex: 1,
+                      child: ContentTutorialSecond(pageNumber: _pageNumber),
+                      imageName: "assets/mockupscan.png",
+                    ),
+                    _drawCarousselItemWithPicture(
+                      pageIndex: 2,
+                      child: ContentTutorialThird(pageNumber: _pageNumber),
+                      imageName: "assets/mockupsearch.png",
+                    ),
+                    _drawCarousselItemWithPicture(
+                      pageIndex: 3,
+                      child: ContentTutorialFourth(pageNumber: _pageNumber),
+                      imageName: "assets/mockupproduct.png",
+                    ),
+                    _drawCarousselItemWithPicture(
+                      pageIndex: 4,
+                      child: ContentTutorialFifth(pageNumber: _pageNumber),
+                      imageName: "assets/mockuptag.png",
+                    ),
                   ],
                 ),
               ),
+              // Bouton du bas
               Container(
                 height: 100,
                 width: MediaQuery.of(context).size.width,
@@ -95,7 +125,7 @@ class _FirstOpenState extends State<FirstOpen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Recherchez",
+                                  "Rechercher",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
@@ -117,7 +147,7 @@ class _FirstOpenState extends State<FirstOpen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Apprenez",
+                                  "Apprendre",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
@@ -139,7 +169,7 @@ class _FirstOpenState extends State<FirstOpen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Découvrez",
+                                  "Découvrir",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
@@ -161,7 +191,13 @@ class _FirstOpenState extends State<FirstOpen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Terminez la visite",
+                                  widget.initializationStep ==
+                                              InitializationStep
+                                                  .initializationError ||
+                                          widget.initializationStep ==
+                                              InitializationStep.loginError
+                                      ? "Réessayer de se connecter"
+                                      : "Terminer la visite",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
@@ -173,20 +209,32 @@ class _FirstOpenState extends State<FirstOpen> {
                                   duration: Duration(
                                     milliseconds: 200,
                                   ),
-                                  child: widget.loadingFinish
+                                  child: widget.initializationStep ==
+                                          InitializationStep.success
                                       ? Icon(
                                           CupertinoIcons.check_mark,
                                           size: 20,
                                         )
-                                      : Theme(
-                                          data: ThemeData(
-                                            cupertinoOverrideTheme:
-                                                CupertinoThemeData(
-                                                    brightness:
-                                                        Brightness.dark),
-                                          ),
-                                          child: CupertinoActivityIndicator(),
-                                        ),
+                                      : widget.initializationStep ==
+                                                  InitializationStep
+                                                      .initializationError ||
+                                              widget.initializationStep ==
+                                                  InitializationStep.loginError
+                                          ? Icon(
+                                              CupertinoIcons
+                                                  .wifi_exclamationmark,
+                                              size: 20,
+                                            )
+                                          : Theme(
+                                              data: ThemeData(
+                                                cupertinoOverrideTheme:
+                                                    CupertinoThemeData(
+                                                        brightness:
+                                                            Brightness.dark),
+                                              ),
+                                              child:
+                                                  CupertinoActivityIndicator(),
+                                            ),
                                 ),
                               ],
                             ),
@@ -194,23 +242,39 @@ class _FirstOpenState extends State<FirstOpen> {
                         ],
                       ),
                       onPressed: () async {
+                        // Si on est sur la dernière page et qu'on appuie
                         if (_pageNumber == 4) {
-                          if (!widget.loadingFinish) return null;
-                          print(widget.tutorialReaded);
+                          // Si l'initialisation n'est pas terminée
+                          if (widget.initializationStep !=
+                              InitializationStep.success) {
+                            if (widget.initializationStep ==
+                                    InitializationStep.initializationError &&
+                                widget.initializer != null) {
+                              // Si l'initialisation de Firebase a échoué
+                              widget.initializer!();
+                            } else if (widget.initializationStep ==
+                                    InitializationStep.loginError &&
+                                widget.logger != null) {
+                              // Si Firebase a réussi mais que le log a échoué
+                              widget.logger!();
+                            }
+                            return null;
+                          }
+
+                          // On note dans les préférences que le tutoriel a été lu
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
                           prefs.setBool("tutorialReaded", true);
 
-                          if (widget.tutorialReaded != null) {
-                            widget.tutorialReaded!();
+                          // Si la fonction de fin de tutoriel est transmise (appel depuis le main.dart) on l'éxécute pour rejoindre le bon CupertinoApp
+                          // Sinon (appel depuis l'about), simple pop
+                          if (widget.finishTutorial != null) {
+                            widget.finishTutorial!();
                           } else {
-                            Navigator.of(context).pushReplacement(
-                              CupertinoPageRoute(
-                                builder: (context) => Homepage(),
-                              ),
-                            );
+                            Navigator.of(context).pop();
                           }
                         } else {
+                          // Sinon on incrémente juste d'une page
                           setState(() {
                             _pageNumber++;
                           });
@@ -222,6 +286,38 @@ class _FirstOpenState extends State<FirstOpen> {
           ),
         ),
       ),
+    );
+  }
+
+  // Contenu avec l'image utilisé par toutes les pages hormis la première
+  Column _drawCarousselItemWithPicture(
+      {required int pageIndex,
+      required Widget child,
+      required String imageName}) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 65, horizontal: 25),
+          child: AnimatedOpacity(
+            duration: Duration(milliseconds: 600),
+            opacity: _pageNumber >= pageIndex ? 1 : 0,
+            child: Container(
+              width: double.infinity,
+              child: Image(
+                image: AssetImage(imageName),
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              child,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -242,48 +338,38 @@ class ContentTutorialFifth extends StatelessWidget {
       pageIndex: 4,
       child: Container(
         height: double.infinity,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  child: Image(
-                    image: AssetImage("assets/mockuptag.png"),
-                    fit: BoxFit.fitWidth,
-                  ),
-                ),
-                SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Découvrez".toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w200,
-                          fontSize: 25,
-                          letterSpacing: 4,
-                          wordSpacing: 13,
-                          color: CupertinoColors.white,
-                        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Découvrez".toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w200,
+                        fontSize: 25,
+                        letterSpacing: 4,
+                        wordSpacing: 13,
+                        color: CupertinoColors.white,
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        "A la fin de chaque fiche produit se trouve une liste de tags pour retrouver des alternatives à celui que vous êtes en train d'étudiez.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "A la fin de chaque fiche produit se trouve une liste de tags pour retrouver des alternatives à celui que vous êtes en train d'étudier.",
+                      style: textStyle,
+                    ),
+                    SizedBox(height: 15),
+                    Text(
+                      "De nouvelles fiches produits et de nouvelles fonctionnalités seront ajoutées progressivement, pensez à y jeter un œil régulièrement !",
+                      style: textStyle,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -307,57 +393,38 @@ class ContentTutorialFourth extends StatelessWidget {
       pageIndex: 3,
       child: Container(
         height: double.infinity,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  child: Image(
-                    image: AssetImage("assets/mockupproduct.png"),
-                    fit: BoxFit.fitWidth,
-                  ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Apprenez".toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w200,
+                        fontSize: 25,
+                        letterSpacing: 4,
+                        wordSpacing: 13,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "Chaque fiche est structurée selon le même modèle pour retrouver facilement une information.",
+                      style: textStyle,
+                    ),
+                    SizedBox(height: 15),
+                    Text(
+                      "Toutes les données des fiches produits sont issues des modes d'emploi des fabricants.",
+                      style: textStyle,
+                    ),
+                  ],
                 ),
-                SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Apprenez".toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w200,
-                          fontSize: 25,
-                          letterSpacing: 4,
-                          wordSpacing: 13,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Chaque fiche est structurée selon le même modèle pour retrouver facilement une information.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 7),
-                      Text(
-                        "Toutes les données des fiches produits sont issues des modes d'emploi des fabricants.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -381,89 +448,70 @@ class ContentTutorialThird extends StatelessWidget {
       pageIndex: 2,
       child: Container(
         height: double.infinity,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  child: Image(
-                    image: AssetImage("assets/mockupsearch.png"),
-                    fit: BoxFit.fitWidth,
-                  ),
-                ),
-                SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Recherchez".toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w200,
-                          fontSize: 25,
-                          letterSpacing: 4,
-                          wordSpacing: 13,
-                          color: CupertinoColors.white,
-                        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Recherchez".toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w200,
+                        fontSize: 25,
+                        letterSpacing: 4,
+                        wordSpacing: 13,
+                        color: CupertinoColors.white,
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Utilisez l'onglet recherche pour retrouver un produit en utilisant son nom, sa catégorie ou son indication.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 7),
-                      RichText(
-                        text: new TextSpan(
-                          children: [
-                            new TextSpan(
-                              text: "Par exemple, tapez ",
-                            ),
-                            new TextSpan(
-                              text: "\"scellement\" ",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            new TextSpan(
-                              text:
-                                  "pour retrouver tous les ciments de scellement, ",
-                            ),
-                            new TextSpan(
-                              text: "\"zoe\" ",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            new TextSpan(
-                              text:
-                                  "pour retrouver tous les matériaux à base d'Oxide de zinc/Eugénol ou directement ",
-                            ),
-                            new TextSpan(
-                              text: "\"Unifast\".",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                          style: TextStyle(
-                            fontWeight: FontWeight.w300,
-                            fontSize: 18,
-                            color: CupertinoColors.white,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "Utilisez l'onglet recherche pour retrouver un produit en utilisant son nom, sa catégorie ou son indication.",
+                      style: textStyle,
+                    ),
+                    SizedBox(height: 15),
+                    RichText(
+                      text: new TextSpan(
+                        children: [
+                          new TextSpan(
+                            text: "Par exemple, tapez ",
                           ),
-                        ),
+                          new TextSpan(
+                            text: "\"scellement\" ",
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          new TextSpan(
+                            text:
+                                "pour retrouver tous les ciments de scellement, ",
+                          ),
+                          new TextSpan(
+                            text: "\"zoe\" ",
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          new TextSpan(
+                            text:
+                                "pour retrouver tous les matériaux à base d'Oxide de zinc/Eugénol ou directement ",
+                          ),
+                          new TextSpan(
+                            text: "\"Unifast\".",
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                        style: textStyle,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -487,57 +535,80 @@ class ContentTutorialSecond extends StatelessWidget {
       pageIndex: 1,
       child: Container(
         height: double.infinity,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  child: Image(
-                    image: AssetImage("assets/mockupscan.png"),
-                    fit: BoxFit.fitWidth,
-                  ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Scannez".toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w200,
+                        fontSize: 25,
+                        letterSpacing: 4,
+                        wordSpacing: 13,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "Une analyse facile, rapide et hors ligne à partir de l'étiquette de votre produit.",
+                      style: textStyle,
+                    ),
+                    SizedBox(height: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          child: new Text(
+                              "Pour un scan efficace, vérifiez que :",
+                              style: textStyle),
+                        ),
+                        SizedBox(height: 5),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6.0),
+                              child: new Text("•", style: textStyle),
+                            ),
+                            Expanded(
+                              child: new Text(
+                                "le nom du produit est lisible sur votre capture",
+                                style: textStyle.copyWith(
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6.0),
+                              child: new Text("•", style: textStyle),
+                            ),
+                            Expanded(
+                              child: new Text(
+                                "le produit est présent dans l'onglet recherche de biolens",
+                                style: textStyle.copyWith(
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Scannez".toUpperCase(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w200,
-                          fontSize: 25,
-                          letterSpacing: 4,
-                          wordSpacing: 13,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Une analyse facile, rapide et hors ligne à partir de l'étiquette de votre produit.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 7),
-                      Text(
-                        "Pour un scan efficace, vérifiez bien que le nom du produit est lisible et que le produit est présent dans l'onglet recherche de l'application.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 18,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -553,6 +624,7 @@ class ContentTutorialFirst extends StatelessWidget {
         super(key: key);
 
   final int _pageNumber;
+  final double _multiplyWidth = 0.65;
 
   @override
   Widget build(BuildContext context) {
@@ -563,19 +635,17 @@ class ContentTutorialFirst extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: MediaQuery.of(context).size.width * 0.7,
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: Text(
-                  "Bienvenue sur".toUpperCase(),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w200,
-                    fontSize: 25,
-                    letterSpacing: 4,
-                    wordSpacing: 13,
-                    color: CupertinoColors.white,
-                  ),
+            width: MediaQuery.of(context).size.width * _multiplyWidth + 13,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Text(
+                "Bienvenue sur".toUpperCase(),
+                style: TextStyle(
+                  fontWeight: FontWeight.w200,
+                  fontSize: 25,
+                  letterSpacing: 4,
+                  wordSpacing: 13,
+                  color: CupertinoColors.white,
                 ),
               ),
             ),
@@ -583,7 +653,12 @@ class ContentTutorialFirst extends StatelessWidget {
           SizedBox(height: 25),
           SvgPicture.asset(
             'assets/logo.svg',
-            width: MediaQuery.of(context).size.width * 0.625,
+            width: MediaQuery.of(context).size.width * _multiplyWidth,
+            placeholderBuilder: (context) => Container(
+              height: MediaQuery.of(context).size.width *
+                  _multiplyWidth *
+                  (332 / 1024),
+            ),
             color: CupertinoColors.white,
           ),
         ],
@@ -604,7 +679,7 @@ class AnimatedContentTutorial extends StatelessWidget {
   final int pageIndex;
   final Widget child;
   // Pour moduler la vitesse de l'animation
-  final double _multiplyAnimation = 1.6;
+  final double _multiplyAnimation = 1.4;
 
   @override
   Widget build(BuildContext context) {
@@ -643,7 +718,7 @@ class AnimatedButtonContentTutorial extends StatefulWidget {
 class _AnimatedButtonContentTutorialState
     extends State<AnimatedButtonContentTutorial> {
   // Pour moduler la vitesse de l'animation
-  final double _multiplyAnimation = 1.6;
+  final double _multiplyAnimation = 1.1;
   // On enclenche manuellement le fadeIn pour créer un délais
   bool _fadeIn = false;
 
