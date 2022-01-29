@@ -3,6 +3,7 @@ import 'package:biolens/models/tags/tags.dart';
 import 'package:biolens/shelf.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class ListItemsSearchable {
@@ -106,104 +107,113 @@ class _SearchState extends State<Search> {
         }
         return false;
       },
-      child: CupertinoPageScaffold(
-        child: SafeArea(
-          child: Container(
-            padding: EdgeInsets.fromLTRB(35, 20, 35, 0),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Hero(
-                        tag: 'search',
-                        transitionOnUserGestures: true,
-                        child: Container(
-                          width: double.infinity,
-                          height: 60,
-                          child: CupertinoTextField(
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            keyboardType: TextInputType.name,
-                            focusNode: _focusSearch,
-                            controller: _searchController,
-                            onChanged: (value) {
-                              // Quand on tape du text on met à jours les résultats
-                              setState(() {
-                                _searchedResults = SearchFuzzy.searchByName(
-                                    query: value,
-                                    listItemsSearchable: _listItemsSearchable);
-                              });
-                            },
-                            padding: EdgeInsets.zero,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarIconBrightness: Brightness.dark,
+          statusBarColor: Color.fromARGB(0, 0, 0, 0),
+          systemNavigationBarColor: Color.fromRGBO(255, 255, 255, 1),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: CupertinoPageScaffold(
+          child: SafeArea(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(35, 20, 35, 0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Hero(
+                          tag: 'search',
+                          transitionOnUserGestures: true,
+                          child: Container(
+                            width: double.infinity,
+                            height: 60,
+                            child: CupertinoTextField(
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              keyboardType: TextInputType.name,
+                              focusNode: _focusSearch,
+                              controller: _searchController,
+                              onChanged: (value) {
+                                // Quand on tape du text on met à jours les résultats
+                                setState(() {
+                                  _searchedResults = SearchFuzzy.searchByName(
+                                      query: value,
+                                      listItemsSearchable:
+                                          _listItemsSearchable);
+                                });
+                              },
+                              padding: EdgeInsets.zero,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(10),
+                                ),
+                                color: CupertinoColors.systemGrey6,
                               ),
-                              color: CupertinoColors.systemGrey6,
-                            ),
-                            prefix: Padding(
-                              padding: EdgeInsets.fromLTRB(20, 20, 15, 20),
-                              child: Icon(
-                                CupertinoIcons.search,
+                              prefix: Padding(
+                                padding: EdgeInsets.fromLTRB(20, 20, 15, 20),
+                                child: Icon(
+                                  CupertinoIcons.search,
+                                  color: CupertinoColors.systemGrey,
+                                ),
+                              ),
+                              suffix: Padding(
+                                padding: EdgeInsets.fromLTRB(15, 20, 20, 20),
+                                child: _searchController.text.length > 0
+                                    ? CupertinoButton(
+                                        padding: const EdgeInsets.all(0),
+                                        onPressed: () => setState(() {
+                                          // Quand on clique sur la croix du champs de recherche on réinitialise le champs et on effectue une recherche vide pour réafficher tous les produits
+                                          _searchController.text = "";
+                                          _searchedResults =
+                                              SearchFuzzy.searchByName(
+                                                  query: _searchController.text,
+                                                  listItemsSearchable:
+                                                      _listItemsSearchable);
+                                        }),
+                                        child: Icon(
+                                          CupertinoIcons.multiply,
+                                          color: CupertinoColors.systemGrey,
+                                        ),
+                                      )
+                                    : SizedBox(),
+                              ),
+                              placeholder: "Rechercher",
+                              placeholderStyle: TextStyle(
+                                fontSize: 18,
                                 color: CupertinoColors.systemGrey,
                               ),
                             ),
-                            suffix: Padding(
-                              padding: EdgeInsets.fromLTRB(15, 20, 20, 20),
-                              child: _searchController.text.length > 0
-                                  ? CupertinoButton(
-                                      padding: const EdgeInsets.all(0),
-                                      onPressed: () => setState(() {
-                                        // Quand on clique sur la croix du champs de recherche on réinitialise le champs et on effectue une recherche vide pour réafficher tous les produits
-                                        _searchController.text = "";
-                                        _searchedResults =
-                                            SearchFuzzy.searchByName(
-                                                query: _searchController.text,
-                                                listItemsSearchable:
-                                                    _listItemsSearchable);
-                                      }),
-                                      child: Icon(
-                                        CupertinoIcons.multiply,
-                                        color: CupertinoColors.systemGrey,
-                                      ),
-                                    )
-                                  : SizedBox(),
-                            ),
-                            placeholder: "Rechercher",
-                            placeholderStyle: TextStyle(
-                              fontSize: 18,
-                              color: CupertinoColors.systemGrey,
-                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Expanded(
-                        child: AnimatedPadding(
-                          duration: Duration(milliseconds: 300),
-                          padding: EdgeInsets.fromLTRB(
-                              0, (_itemsAreVisible ? 0 : 20), 0, 0),
-                          child: AnimatedOpacity(
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Expanded(
+                          child: AnimatedPadding(
                             duration: Duration(milliseconds: 300),
-                            opacity: (_itemsAreVisible ? 1 : 0),
-                            child: ProductsList(
-                              searchedList: _searchedResults,
-                              popAction: _popAction,
+                            padding: EdgeInsets.fromLTRB(
+                                0, (_itemsAreVisible ? 0 : 20), 0, 0),
+                            child: AnimatedOpacity(
+                              duration: Duration(milliseconds: 300),
+                              opacity: (_itemsAreVisible ? 1 : 0),
+                              child: ProductsList(
+                                searchedList: _searchedResults,
+                                popAction: _popAction,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                CupertinoButton(
-                  onPressed: () => _popAction(),
-                  child: Text("Retourner au scanner"),
-                ),
-              ],
+                  CupertinoButton(
+                    onPressed: () => _popAction(),
+                    child: Text("Retourner au scanner"),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

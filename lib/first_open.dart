@@ -1,6 +1,7 @@
 import 'package:biolens/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,257 +33,279 @@ class _FirstOpenState extends State<FirstOpen> {
   int _pageNumber = 0;
 
   @override
+  void initState() {
+    print("gf");
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromRGBO(65, 123, 209, 1),
-              CupertinoTheme.of(context).primaryColor,
-              Color.fromRGBO(167, 49, 129, 1)
-            ],
-            stops: [0, 0.4, 1],
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
+    // //For Navigation bar
+    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    //   statusBarIconBrightness: Brightness.light,
+    //   statusBarColor: Color.fromARGB(0, 0, 0, 0),
+    //   systemNavigationBarColor: Color.fromRGBO(65, 123, 209, 1),
+    //   systemNavigationBarIconBrightness: Brightness.light,
+    // ));
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.light,
+        statusBarColor: Color.fromARGB(0, 0, 0, 0),
+        systemNavigationBarColor: Color.fromRGBO(65, 123, 209, 1),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: CupertinoPageScaffold(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromRGBO(65, 123, 209, 1),
+                CupertinoTheme.of(context).primaryColor,
+                Color.fromRGBO(167, 49, 129, 1)
+              ],
+              stops: [0, 0.4, 1],
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Contenu du haut
-              Expanded(
-                child: Stack(
-                  children: [
-                    ContentTutorialFirst(pageNumber: _pageNumber),
-                    _drawCarousselItemWithPicture(
-                      pageIndex: 1,
-                      child: ContentTutorialSecond(pageNumber: _pageNumber),
-                      imageName: "assets/mockupscan.png",
-                    ),
-                    _drawCarousselItemWithPicture(
-                      pageIndex: 2,
-                      child: ContentTutorialThird(pageNumber: _pageNumber),
-                      imageName: "assets/mockupsearch.png",
-                    ),
-                    _drawCarousselItemWithPicture(
-                      pageIndex: 3,
-                      child: ContentTutorialFourth(pageNumber: _pageNumber),
-                      imageName: "assets/mockupproduct.png",
-                    ),
-                    _drawCarousselItemWithPicture(
-                      pageIndex: 4,
-                      child: ContentTutorialFifth(pageNumber: _pageNumber),
-                      imageName: "assets/mockuptag.png",
-                    ),
-                  ],
-                ),
-              ),
-              // Bouton du bas
-              Container(
-                height: 100,
-                width: MediaQuery.of(context).size.width,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
-                  child: CupertinoButton(
-                      padding: EdgeInsets.all(8),
-                      color: CupertinoTheme.of(context).primaryColor,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(10),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Contenu du haut
+                Expanded(
+                  child: Stack(
+                    children: [
+                      ContentTutorialFirst(pageNumber: _pageNumber),
+                      _drawCarousselItemWithPicture(
+                        pageIndex: 1,
+                        child: ContentTutorialSecond(pageNumber: _pageNumber),
+                        imageName: "assets/mockupscan.png",
                       ),
-                      child: Stack(
-                        children: [
-                          AnimatedButtonContentTutorial(
-                            currentPage: _pageNumber,
-                            pageIndex: 0,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Commencer la visite",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 1,
+                      _drawCarousselItemWithPicture(
+                        pageIndex: 2,
+                        child: ContentTutorialThird(pageNumber: _pageNumber),
+                        imageName: "assets/mockupsearch.png",
+                      ),
+                      _drawCarousselItemWithPicture(
+                        pageIndex: 3,
+                        child: ContentTutorialFourth(pageNumber: _pageNumber),
+                        imageName: "assets/mockupproduct.png",
+                      ),
+                      _drawCarousselItemWithPicture(
+                        pageIndex: 4,
+                        child: ContentTutorialFifth(pageNumber: _pageNumber),
+                        imageName: "assets/mockuptag.png",
+                      ),
+                    ],
+                  ),
+                ),
+                // Bouton du bas
+                Container(
+                  height: 100,
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25, vertical: 25),
+                    child: CupertinoButton(
+                        padding: EdgeInsets.all(8),
+                        color: CupertinoTheme.of(context).primaryColor,
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                        child: Stack(
+                          children: [
+                            AnimatedButtonContentTutorial(
+                              currentPage: _pageNumber,
+                              pageIndex: 0,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Commencer la visite",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  size: 20,
-                                ),
-                              ],
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          AnimatedButtonContentTutorial(
-                            currentPage: _pageNumber,
-                            pageIndex: 1,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Rechercher",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 1,
+                            AnimatedButtonContentTutorial(
+                              currentPage: _pageNumber,
+                              pageIndex: 1,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Rechercher",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  size: 20,
-                                ),
-                              ],
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          AnimatedButtonContentTutorial(
-                            currentPage: _pageNumber,
-                            pageIndex: 2,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Apprendre",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 1,
+                            AnimatedButtonContentTutorial(
+                              currentPage: _pageNumber,
+                              pageIndex: 2,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Apprendre",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  size: 20,
-                                ),
-                              ],
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          AnimatedButtonContentTutorial(
-                            currentPage: _pageNumber,
-                            pageIndex: 3,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Découvrir",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 1,
+                            AnimatedButtonContentTutorial(
+                              currentPage: _pageNumber,
+                              pageIndex: 3,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Découvrir",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  size: 20,
-                                ),
-                              ],
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          AnimatedButtonContentTutorial(
-                            currentPage: _pageNumber,
-                            pageIndex: 4,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  widget.initializationStep ==
-                                              InitializationStep
-                                                  .initializationError ||
-                                          widget.initializationStep ==
-                                              InitializationStep.loginError
-                                      ? "Réessayer de se connecter"
-                                      : "Terminer la visite",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 1,
+                            AnimatedButtonContentTutorial(
+                              currentPage: _pageNumber,
+                              pageIndex: 4,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    widget.initializationStep ==
+                                                InitializationStep
+                                                    .initializationError ||
+                                            widget.initializationStep ==
+                                                InitializationStep.loginError
+                                        ? "Réessayer de se connecter"
+                                        : "Terminer la visite",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 8),
-                                AnimatedSwitcher(
-                                  duration: Duration(
-                                    milliseconds: 200,
-                                  ),
-                                  child: widget.initializationStep ==
-                                          InitializationStep.success
-                                      ? Icon(
-                                          CupertinoIcons.check_mark,
-                                          size: 20,
-                                        )
-                                      : widget.initializationStep ==
-                                                  InitializationStep
-                                                      .initializationError ||
-                                              widget.initializationStep ==
-                                                  InitializationStep.loginError
-                                          ? Icon(
-                                              CupertinoIcons
-                                                  .wifi_exclamationmark,
-                                              size: 20,
-                                            )
-                                          : Theme(
-                                              data: ThemeData(
-                                                cupertinoOverrideTheme:
-                                                    CupertinoThemeData(
-                                                        brightness:
-                                                            Brightness.dark),
+                                  SizedBox(width: 8),
+                                  AnimatedSwitcher(
+                                    duration: Duration(
+                                      milliseconds: 200,
+                                    ),
+                                    child: widget.initializationStep ==
+                                            InitializationStep.success
+                                        ? Icon(
+                                            CupertinoIcons.check_mark,
+                                            size: 20,
+                                          )
+                                        : widget.initializationStep ==
+                                                    InitializationStep
+                                                        .initializationError ||
+                                                widget.initializationStep ==
+                                                    InitializationStep
+                                                        .loginError
+                                            ? Icon(
+                                                CupertinoIcons
+                                                    .wifi_exclamationmark,
+                                                size: 20,
+                                              )
+                                            : Theme(
+                                                data: ThemeData(
+                                                  cupertinoOverrideTheme:
+                                                      CupertinoThemeData(
+                                                          brightness:
+                                                              Brightness.dark),
+                                                ),
+                                                child:
+                                                    CupertinoActivityIndicator(),
                                               ),
-                                              child:
-                                                  CupertinoActivityIndicator(),
-                                            ),
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      onPressed: () async {
-                        // Si on est sur la dernière page et qu'on appuie
-                        if (_pageNumber == 4) {
-                          // Si l'initialisation n'est pas terminée
-                          if (widget.initializationStep !=
-                              InitializationStep.success) {
-                            if (widget.initializationStep ==
-                                    InitializationStep.initializationError &&
-                                widget.initializer != null) {
-                              // Si l'initialisation de Firebase a échoué
-                              widget.initializer!();
-                            } else if (widget.initializationStep ==
-                                    InitializationStep.loginError &&
-                                widget.logger != null) {
-                              // Si Firebase a réussi mais que le log a échoué
-                              widget.logger!();
+                          ],
+                        ),
+                        onPressed: () async {
+                          // Si on est sur la dernière page et qu'on appuie
+                          if (_pageNumber == 4) {
+                            // Si l'initialisation n'est pas terminée
+                            if (widget.initializationStep !=
+                                InitializationStep.success) {
+                              if (widget.initializationStep ==
+                                      InitializationStep.initializationError &&
+                                  widget.initializer != null) {
+                                // Si l'initialisation de Firebase a échoué
+                                widget.initializer!();
+                              } else if (widget.initializationStep ==
+                                      InitializationStep.loginError &&
+                                  widget.logger != null) {
+                                // Si Firebase a réussi mais que le log a échoué
+                                widget.logger!();
+                              }
+                              return null;
                             }
-                            return null;
-                          }
 
-                          // On note dans les préférences que le tutoriel a été lu
-                          SharedPreferences prefs =
-                              await SharedPreferences.getInstance();
-                          prefs.setBool("tutorialReaded", true);
+                            // On note dans les préférences que le tutoriel a été lu
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
+                            prefs.setBool("tutorialReaded", true);
 
-                          // Si la fonction de fin de tutoriel est transmise (appel depuis le main.dart) on l'éxécute pour rejoindre le bon CupertinoApp
-                          // Sinon (appel depuis l'about), simple pop
-                          if (widget.finishTutorial != null) {
-                            widget.finishTutorial!();
+                            // Si la fonction de fin de tutoriel est transmise (appel depuis le main.dart) on l'éxécute pour rejoindre le bon CupertinoApp
+                            // Sinon (appel depuis l'about), simple pop
+                            if (widget.finishTutorial != null) {
+                              widget.finishTutorial!();
+                            } else {
+                              Navigator.of(context).pop();
+                            }
                           } else {
-                            Navigator.of(context).pop();
+                            // Sinon on incrémente juste d'une page
+                            setState(() {
+                              _pageNumber++;
+                            });
                           }
-                        } else {
-                          // Sinon on incrémente juste d'une page
-                          setState(() {
-                            _pageNumber++;
-                          });
-                        }
-                      }),
+                        }),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

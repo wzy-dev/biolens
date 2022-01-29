@@ -6,6 +6,7 @@ import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:biolens/models/products/products.dart';
 import 'package:biolens/models/tags/tags.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
@@ -38,199 +39,207 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.darkBackgroundGray,
-      child: Stack(
-        children: [
-          CameraPreview(
-            cameraKey: _cameraKey,
-            cameraIsVisible: _cameraIsVisible,
-            cameraReloading: _cameraReloading,
-            isActive: _isActive,
-            permissionEnabled: _permissionEnabled,
-            searchLoading: _searchLoading,
-            setCameraIsVisible: _setCameraIsVisible,
-            setCameraReloading: _setCameraReloading,
-            setIsActive: _setIsActive,
-            setPermissionEnabled: _setPermissionEnabled,
-            setSearchLoading: _setSearchLoading,
-          ),
-          // Bouton "à propos"
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: CupertinoButton(
-                onPressed: () async {
-                  bool cameraIsDesactivate = false;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.dark,
+        statusBarColor: Color.fromARGB(0, 0, 0, 0),
+        systemNavigationBarColor: Color.fromRGBO(241, 246, 249, 1),
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
+        backgroundColor: CupertinoColors.darkBackgroundGray,
+        child: Stack(
+          children: [
+            CameraPreview(
+              cameraKey: _cameraKey,
+              cameraIsVisible: _cameraIsVisible,
+              cameraReloading: _cameraReloading,
+              isActive: _isActive,
+              permissionEnabled: _permissionEnabled,
+              searchLoading: _searchLoading,
+              setCameraIsVisible: _setCameraIsVisible,
+              setCameraReloading: _setCameraReloading,
+              setIsActive: _setIsActive,
+              setPermissionEnabled: _setPermissionEnabled,
+              setSearchLoading: _setSearchLoading,
+            ),
+            // Bouton "à propos"
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: CupertinoButton(
+                  onPressed: () async {
+                    bool cameraIsDesactivate = false;
 
-                  // On désactive la caméra après la transition
-                  Future.delayed(
-                    Duration(milliseconds: 500),
-                    () => setState(
-                      () {
-                        _isActive = false;
-                        _cameraIsVisible = false;
-                        _cameraReloading = false;
-                      },
-                    ),
-                  ).then((value) => cameraIsDesactivate = true);
-
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (context) => About(),
-                    ),
-                  );
-
-                  // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
-                  Future.delayed(
-                    Duration(milliseconds: cameraIsDesactivate ? 300 : 500),
-                    () {
-                      setState(
+                    // On désactive la caméra après la transition
+                    Future.delayed(
+                      Duration(milliseconds: 500),
+                      () => setState(
                         () {
-                          _isActive = true;
+                          _isActive = false;
+                          _cameraIsVisible = false;
+                          _cameraReloading = false;
                         },
-                      );
-                    },
-                  );
-                },
-                padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
-                child: Icon(
-                  CupertinoIcons.info_circle,
-                  size: 26,
+                      ),
+                    ).then((value) => cameraIsDesactivate = true);
+
+                    await Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => About(),
+                      ),
+                    );
+
+                    // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
+                    Future.delayed(
+                      Duration(milliseconds: cameraIsDesactivate ? 300 : 500),
+                      () {
+                        setState(
+                          () {
+                            _isActive = true;
+                          },
+                        );
+                      },
+                    );
+                  },
+                  padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
+                  child: Icon(
+                    CupertinoIcons.info_circle,
+                    size: 26,
+                    color: Color.fromRGBO(241, 246, 249, 1),
+                  ),
+                ),
+              ),
+            ),
+            // Commandes en bas de l'écran
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 210,
+                padding: EdgeInsets.all(35),
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      child: CupertinoButton(
+                        disabledColor: CupertinoColors.inactiveGray,
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                        child: Text(
+                          'Scanner',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        // Le bouton est désactivé si le scan est impossible
+                        onPressed: _searchLoading || _permissionEnabled != true
+                            ? null
+                            : () => _toScan(),
+                        color: CupertinoTheme.of(context).primaryColor,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () async {
+                        // On désactive la caméra si on change de page
+                        setState(() {
+                          _isActive = false;
+                          _cameraIsVisible = false;
+                          _cameraReloading = false;
+                        });
+                        await Future.delayed(
+                          Duration(milliseconds: 100),
+                          () async => await Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, anotherAnimation) =>
+                                      Search(),
+                              fullscreenDialog: true,
+                              transitionDuration: Duration(milliseconds: 500),
+                              reverseTransitionDuration:
+                                  Duration(milliseconds: 350),
+                              transitionsBuilder: (context, animation,
+                                  anotherAnimation, child) {
+                                animation = CurvedAnimation(
+                                  curve: Curves.linearToEaseOut,
+                                  parent: animation,
+                                );
+                                return SlideTransition(
+                                  position: Tween(
+                                    begin: Offset(0, 1),
+                                    end: Offset(0.0, 0.0),
+                                  ).animate(animation),
+                                  child: child,
+                                );
+                              },
+                            ),
+                          ),
+                        );
+
+                        Future.delayed(
+                          Duration(milliseconds: 320),
+                          () => setState(
+                            () {
+                              _isActive = true;
+                              _cameraIsVisible = true;
+                              _cameraReloading = true;
+                            },
+                          ),
+                        );
+                      },
+                      child: Hero(
+                        tag: 'search',
+                        transitionOnUserGestures: true,
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(10),
+                            ),
+                            color: CupertinoColors.systemGrey5,
+                          ),
+                          padding: EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(0, 0, 15, 0),
+                                child: Icon(
+                                  CupertinoIcons.search,
+                                  color: CupertinoColors.systemGrey,
+                                ),
+                              ),
+                              Text(
+                                "Rechercher",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: CupertinoColors.systemGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
                   color: Color.fromRGBO(241, 246, 249, 1),
                 ),
               ),
             ),
-          ),
-          // Commandes en bas de l'écran
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 210,
-              padding: EdgeInsets.all(35),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    child: CupertinoButton(
-                      disabledColor: CupertinoColors.inactiveGray,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(10),
-                      ),
-                      child: Text(
-                        'Scanner',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      // Le bouton est désactivé si le scan est impossible
-                      onPressed: _searchLoading || _permissionEnabled != true
-                          ? null
-                          : () => _toScan(),
-                      color: CupertinoTheme.of(context).primaryColor,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () async {
-                      // On désactive la caméra si on change de page
-                      setState(() {
-                        _isActive = false;
-                        _cameraIsVisible = false;
-                        _cameraReloading = false;
-                      });
-                      await Future.delayed(
-                        Duration(milliseconds: 100),
-                        () async => await Navigator.of(context).push(
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, anotherAnimation) =>
-                                    Search(),
-                            fullscreenDialog: true,
-                            transitionDuration: Duration(milliseconds: 500),
-                            reverseTransitionDuration:
-                                Duration(milliseconds: 350),
-                            transitionsBuilder:
-                                (context, animation, anotherAnimation, child) {
-                              animation = CurvedAnimation(
-                                curve: Curves.linearToEaseOut,
-                                parent: animation,
-                              );
-                              return SlideTransition(
-                                position: Tween(
-                                  begin: Offset(0, 1),
-                                  end: Offset(0.0, 0.0),
-                                ).animate(animation),
-                                child: child,
-                              );
-                            },
-                          ),
-                        ),
-                      );
-
-                      Future.delayed(
-                        Duration(milliseconds: 320),
-                        () => setState(
-                          () {
-                            _isActive = true;
-                            _cameraIsVisible = true;
-                            _cameraReloading = true;
-                          },
-                        ),
-                      );
-                    },
-                    child: Hero(
-                      tag: 'search',
-                      transitionOnUserGestures: true,
-                      child: Container(
-                        width: double.infinity,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                          color: CupertinoColors.systemGrey5,
-                        ),
-                        padding: EdgeInsets.all(20),
-                        child: Row(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(0, 0, 15, 0),
-                              child: Icon(
-                                CupertinoIcons.search,
-                                color: CupertinoColors.systemGrey,
-                              ),
-                            ),
-                            Text(
-                              "Rechercher",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: CupertinoColors.systemGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                color: Color.fromRGBO(241, 246, 249, 1),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -21,13 +21,6 @@ Future<void> main() async {
 
   runApp(MyApp());
 
-  //For Navigation bar
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarIconBrightness: Brightness.dark,
-    statusBarColor: Color.fromARGB(0, 0, 0, 0),
-    systemNavigationBarColor: Color.fromRGBO(241, 246, 249, 1),
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -121,6 +114,13 @@ class _MyAppState extends State<MyApp> {
     // Si l'initialisation est un succès et qu'on a déjà vu le tutoriel, on affiche le contenu
     if (_initializationStep == InitializationStep.success &&
         tutorialIsReaded == true) {
+      // //For Navigation bar
+      // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      //   statusBarIconBrightness: Brightness.dark,
+      //   statusBarColor: Color.fromARGB(0, 0, 0, 0),
+      //   systemNavigationBarColor: Color.fromRGBO(241, 246, 249, 1),
+      //   systemNavigationBarIconBrightness: Brightness.dark,
+      // ));
       return MultiProvider(
         key: Key(FirebaseAuth.instance.currentUser!.uid),
         providers: MyProvider.generateProvidersList(
