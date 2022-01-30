@@ -1,4 +1,4 @@
-import 'package:biolens/models/mydatabase.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';

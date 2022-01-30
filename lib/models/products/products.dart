@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-import 'package:biolens/models/mydatabase.dart';
-import 'package:biolens/models/ids/ids.dart';
-import 'package:biolens/models/names/names.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:json_annotation/json_annotation.dart';
 

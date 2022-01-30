@@ -180,7 +180,7 @@ class _CameraPreviewState extends State<CameraPreview>
                               height: 10,
                             ),
                             Text(
-                              "Appuyez ici pour accéder aux paramétres et donner l'autorisation.",
+                              "Appuyez ici pour accéder aux paramètres et donner l'autorisation.",
                               style: TextStyle(
                                 color: Color.fromRGBO(255, 255, 255, 0.7),
                                 fontWeight: FontWeight.bold,
@@ -340,15 +340,17 @@ class _CameraPreviewState extends State<CameraPreview>
                   )
                 : Container(),
           ),
-          AnimatedOpacity(
-            opacity: widget.cameraIsVisible ? 0 : 1,
-            duration: Duration(milliseconds: 1000),
-            child: Container(
-              height: _viewportHeight - 190,
-              width: _viewportWidth,
-              color: CupertinoColors.darkBackgroundGray,
-            ),
-          ),
+          widget.permissionEnabled == true
+              ? AnimatedOpacity(
+                  opacity: widget.cameraIsVisible == false ? 1 : 0,
+                  duration: Duration(milliseconds: 1000),
+                  child: Container(
+                    height: _viewportHeight - 190,
+                    width: _viewportWidth,
+                    color: CupertinoColors.darkBackgroundGray,
+                  ),
+                )
+              : SizedBox(),
         ],
       ),
     );

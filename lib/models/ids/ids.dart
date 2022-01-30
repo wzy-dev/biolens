@@ -1,4 +1,4 @@
-import 'package:biolens/models/mydatabase.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'ids.g.dart';

@@ -6,3 +6,5 @@ export 'src/viewer/product_viewer.dart';
 export 'src/home/vision.dart';
 export 'src/home/about.dart';
 export './src/viewer/custom_picture.dart';
+export 'first_open.dart';
+export 'src/home/camera_preview.dart';

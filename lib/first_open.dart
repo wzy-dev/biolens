@@ -1,4 +1,4 @@
-import 'package:biolens/main.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,20 +33,8 @@ class _FirstOpenState extends State<FirstOpen> {
   int _pageNumber = 0;
 
   @override
-  void initState() {
-    print("gf");
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // //For Navigation bar
-    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    //   statusBarIconBrightness: Brightness.light,
-    //   statusBarColor: Color.fromARGB(0, 0, 0, 0),
-    //   systemNavigationBarColor: Color.fromRGBO(65, 123, 209, 1),
-    //   systemNavigationBarIconBrightness: Brightness.light,
-    // ));
+    // Pour la barre de navigation
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.light,
@@ -313,34 +301,38 @@ class _FirstOpenState extends State<FirstOpen> {
   }
 
   // Contenu avec l'image utilisé par toutes les pages hormis la première
-  Column _drawCarousselItemWithPicture(
+  AnimatedOpacity _drawCarousselItemWithPicture(
       {required int pageIndex,
       required Widget child,
       required String imageName}) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 65, horizontal: 25),
-          child: AnimatedOpacity(
-            duration: Duration(milliseconds: 600),
-            opacity: _pageNumber >= pageIndex ? 1 : 0,
-            child: Container(
-              width: double.infinity,
-              child: Image(
-                image: AssetImage(imageName),
-                fit: BoxFit.fitWidth,
+    return AnimatedOpacity(
+      opacity: _pageNumber > 0 ? 1 : 0,
+      duration: Duration.zero,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 65, horizontal: 25),
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 600),
+              opacity: _pageNumber >= pageIndex ? 1 : 0,
+              child: Container(
+                width: double.infinity,
+                child: Image(
+                  image: AssetImage(imageName),
+                  fit: BoxFit.fitWidth,
+                ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: Stack(
-            children: [
-              child,
-            ],
+          Expanded(
+            child: Stack(
+              children: [
+                child,
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -639,7 +631,7 @@ class ContentTutorialSecond extends StatelessWidget {
   }
 }
 
-class ContentTutorialFirst extends StatelessWidget {
+class ContentTutorialFirst extends StatefulWidget {
   const ContentTutorialFirst({
     Key? key,
     required int pageNumber,
@@ -647,12 +639,28 @@ class ContentTutorialFirst extends StatelessWidget {
         super(key: key);
 
   final int _pageNumber;
+
+  @override
+  State<ContentTutorialFirst> createState() => _ContentTutorialFirstState();
+}
+
+class _ContentTutorialFirstState extends State<ContentTutorialFirst> {
   final double _multiplyWidth = 0.65;
+  bool _svgIsDrawing = false;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance!.addPostFrameCallback((_) => Future.delayed(
+        Duration(milliseconds: 300),
+        () => setState(() => _svgIsDrawing = true)));
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContentTutorial(
-      currentPage: _pageNumber,
+      currentPage: widget._pageNumber,
       pageIndex: 0,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -674,15 +682,19 @@ class ContentTutorialFirst extends StatelessWidget {
             ),
           ),
           SizedBox(height: 25),
-          SvgPicture.asset(
-            'assets/logo.svg',
-            width: MediaQuery.of(context).size.width * _multiplyWidth,
-            placeholderBuilder: (context) => Container(
-              height: MediaQuery.of(context).size.width *
-                  _multiplyWidth *
-                  (332 / 1024),
+          AnimatedOpacity(
+            duration: Duration(milliseconds: 300),
+            opacity: _svgIsDrawing ? 1 : 0,
+            child: SvgPicture.asset(
+              'assets/logo.svg',
+              width: MediaQuery.of(context).size.width * _multiplyWidth,
+              placeholderBuilder: (context) => Container(
+                height: MediaQuery.of(context).size.width *
+                    _multiplyWidth *
+                    (332 / 1024),
+              ),
+              color: CupertinoColors.white,
             ),
-            color: CupertinoColors.white,
           ),
         ],
       ),

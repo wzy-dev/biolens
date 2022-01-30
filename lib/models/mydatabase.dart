@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:biolens/models/names/names.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:sqflite/utils/utils.dart';
 import 'package:sqlbrite/sqlbrite.dart';
 

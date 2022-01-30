@@ -1,11 +1,8 @@
 // ignore_for_file: cancel_subscriptions
 import 'dart:async';
 
-import 'package:biolens/first_open.dart';
-import 'package:biolens/models/mydatabase.dart';
-import 'package:biolens/models/myprovider.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
-import 'package:biolens/src/home/homepage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,8 +23,6 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 }
-
-enum InitializationStep { loading, success, initializationError, loginError }
 
 class MyApp extends StatefulWidget {
   @override
@@ -114,13 +109,6 @@ class _MyAppState extends State<MyApp> {
     // Si l'initialisation est un succès et qu'on a déjà vu le tutoriel, on affiche le contenu
     if (_initializationStep == InitializationStep.success &&
         tutorialIsReaded == true) {
-      // //For Navigation bar
-      // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      //   statusBarIconBrightness: Brightness.dark,
-      //   statusBarColor: Color.fromARGB(0, 0, 0, 0),
-      //   systemNavigationBarColor: Color.fromRGBO(241, 246, 249, 1),
-      //   systemNavigationBarIconBrightness: Brightness.dark,
-      // ));
       return MultiProvider(
         key: Key(FirebaseAuth.instance.currentUser!.uid),
         providers: MyProvider.generateProvidersList(

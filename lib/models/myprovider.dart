@@ -1,5 +1,4 @@
-import 'package:biolens/models/products/products.dart';
-import 'package:biolens/models/tags/tags.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
