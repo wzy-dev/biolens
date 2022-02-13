@@ -203,6 +203,7 @@ class AnswerBlock extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(11, 0, 0, 0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: replies
                   .map(
                     (reply) => Column(

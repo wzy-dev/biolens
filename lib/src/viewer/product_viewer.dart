@@ -206,22 +206,25 @@ class _ProductViewerState extends State<ProductViewer> {
                   onNotification: (notification) {
                     if (_headerKey.currentContext != null &&
                         !_transitionIsRunning) {
-                      RenderBox render = _headerKey.currentContext!
-                          .findRenderObject() as RenderBox;
-                      if (_defaultHeaderHeight == null) {
+                      // On met un callback pour éviter le warning en cas de setState durant le build
+                      WidgetsBinding.instance!.addPostFrameCallback((_) {
+                        RenderBox render = _headerKey.currentContext!
+                            .findRenderObject() as RenderBox;
+                        if (_defaultHeaderHeight == null) {
+                          setState(() {
+                            _defaultHeaderHeight = render.size.height;
+                          });
+                        }
+
+                        double height = _defaultHeaderHeight! -
+                            _scrollController.position.pixels;
+                        if (height < 0) height = 0;
+                        if (height > _defaultHeaderHeight!)
+                          height = _defaultHeaderHeight!;
+
                         setState(() {
-                          _defaultHeaderHeight = render.size.height;
+                          _headerHeight = height;
                         });
-                      }
-
-                      double height = _defaultHeaderHeight! -
-                          _scrollController.position.pixels;
-                      if (height < 0) height = 0;
-                      if (height > _defaultHeaderHeight!)
-                        height = _defaultHeaderHeight!;
-
-                      setState(() {
-                        _headerHeight = height;
                       });
                     }
                     return true;
@@ -330,15 +333,9 @@ class _ProductViewerState extends State<ProductViewer> {
                               )
                             : Container(),
                       ),
+                      _drawTagsList(),
                       SizedBox(
                         height: 20,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: _drawTagsList(),
-                      ),
-                      SizedBox(
-                        height: 80,
                       ),
                     ],
                   ),
@@ -392,53 +389,59 @@ class _ProductViewerState extends State<ProductViewer> {
     );
   }
 
-  Wrap _drawTagsList() {
+  Widget _drawTagsList() {
     List<Tag>? listTags = _listTagsCollection
         .where((tag) => widget.product.ids.tags.contains(tag.id))
         .toList();
 
-    return Wrap(
-      spacing: 20,
-      runSpacing: 15,
-      alignment: WrapAlignment.center,
-      children: [
-        Text(
-          "tags :",
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(100, 55, 104, 180),
+    if (listTags.length == 0) return SizedBox();
+
+    return Padding(
+      padding:
+          const EdgeInsets.only(top: 20.0, bottom: 60, left: 15, right: 15),
+      child: Wrap(
+        spacing: 20,
+        runSpacing: 15,
+        alignment: WrapAlignment.center,
+        children: [
+          Text(
+            "tags :",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(100, 55, 104, 180),
+            ),
           ),
-        ),
-        ...listTags.map<Widget>(
-          (tag) {
-            return CupertinoButton(
-              minSize: 0,
-              padding: const EdgeInsets.all(0),
-              onPressed: () => showModalBottomSheet(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
+          ...listTags.map<Widget>(
+            (tag) {
+              return CupertinoButton(
+                minSize: 0,
+                padding: const EdgeInsets.all(0),
+                onPressed: () => showModalBottomSheet(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
                     ),
+                    context: context,
+                    builder: (context) => _modalContentBuilder(
+                          context,
+                          tag.id,
+                          tag.name,
+                        )),
+                child: Text(
+                  tag.name.toLowerCase(),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(100, 129, 144, 167),
                   ),
-                  context: context,
-                  builder: (context) => _modalContentBuilder(
-                        context,
-                        tag.id,
-                        tag.name,
-                      )),
-              child: Text(
-                tag.name.toLowerCase(),
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(100, 129, 144, 167),
                 ),
-              ),
-            );
-          },
-        ).toList()
-      ],
+              );
+            },
+          ).toList()
+        ],
+      ),
     );
   }
 

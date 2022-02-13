@@ -355,6 +355,7 @@ class ContentTutorialFifth extends StatelessWidget {
         height: double.infinity,
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -410,6 +411,7 @@ class ContentTutorialFourth extends StatelessWidget {
         height: double.infinity,
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -465,6 +467,7 @@ class ContentTutorialThird extends StatelessWidget {
         height: double.infinity,
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -552,6 +555,7 @@ class ContentTutorialSecond extends StatelessWidget {
         height: double.infinity,
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -666,7 +670,9 @@ class _ContentTutorialFirstState extends State<ContentTutorialFirst> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: MediaQuery.of(context).size.width * _multiplyWidth + 13,
+            width: MediaQuery.of(context).size.width * _multiplyWidth + 13 > 500
+                ? 513
+                : MediaQuery.of(context).size.width * _multiplyWidth + 13,
             child: FittedBox(
               fit: BoxFit.contain,
               child: Text(
@@ -687,7 +693,9 @@ class _ContentTutorialFirstState extends State<ContentTutorialFirst> {
             opacity: _svgIsDrawing ? 1 : 0,
             child: SvgPicture.asset(
               'assets/logo.svg',
-              width: MediaQuery.of(context).size.width * _multiplyWidth,
+              width: MediaQuery.of(context).size.width * _multiplyWidth > 500
+                  ? 500
+                  : MediaQuery.of(context).size.width * _multiplyWidth,
               placeholderBuilder: (context) => Container(
                 height: MediaQuery.of(context).size.width *
                     _multiplyWidth *

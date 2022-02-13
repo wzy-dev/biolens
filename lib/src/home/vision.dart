@@ -54,6 +54,7 @@ class MyVision {
     // Pour chaque mot on recherche sa meilleure association dans la listProductsNames et la listTagsPictures et on stock tout dans une même liste
     _getWordsList(recognisedText).forEach(
       (word) {
+        print(word);
         visionSearchList.add(
           VisionSearchList(
               type: "name",
@@ -107,6 +108,8 @@ class MyVision {
             bestSearch.rating.target!;
       });
     }
+
+    return null;
   }
 
   static Future<File?> _rotate({

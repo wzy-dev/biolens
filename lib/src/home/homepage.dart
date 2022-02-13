@@ -382,6 +382,18 @@ class _HomepageState extends State<Homepage> {
             () {
           _setIsActive(true);
         });
+      }).timeout(Duration(seconds: 5), onTimeout: () async {
+        FirebaseAnalytics.instance
+            .logEvent(name: "to_scan", parameters: {"step": "fail"});
+
+        // Si timeout > bug de l'analyse
+        // On relance tout après 5000ms
+        setState(() {
+          _searchLoading = false;
+          _cameraIsVisible = false;
+          _cameraReloading = true;
+          _cameraKey = Object();
+        });
       });
     }).timeout(Duration(seconds: 3), onTimeout: () async {
       FirebaseAnalytics.instance
