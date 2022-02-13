@@ -1,16 +1,19 @@
 # biolens
 
-A new Flutter project.
+The biolens app was developed as part of an exercise thesis at the faculty of dental surgery in Nantes (France).  
+The objective is to provide dental students with an educational and practical tool in order to make the best use of the various biomaterials and products made available to them.
 
-## Getting Started
+##
 
-This project is a starting point for a Flutter application.
+### Availablity
 
-A few resources to get you started if this is your first Flutter project:
+biolens is a Flutter app that works on Android and iOS devices.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+Google Play Store: https://play.google.com/store/apps/details?id=com.polymathe.biolens  
+Apple App Store: https://apps.apple.com/us/app/biolens/id1600484395
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+##
+
+### Contact
+
+Contact me wegrzyn.simon@gmail.com
