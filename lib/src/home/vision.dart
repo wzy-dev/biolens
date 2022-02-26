@@ -47,9 +47,9 @@ class MyVision {
 
     // On crée une liste avec tous les tagPicture des produits
     List<String?> listTagsPictures = [];
-    listProducts.forEach((product) => listTagsPictures
-        .add(product.tagPicture != null ? _prepareWord(product.name) : null));
-
+    listProducts.forEach((product) => listTagsPictures.add(
+        product.tagPicture != null ? _prepareWord(product.tagPicture!) : null));
+    print(listTagsPictures);
     // On découpe les blocks de text avec la fonction _getWordsList
     // Pour chaque mot on recherche sa meilleure association dans la listProductsNames et la listTagsPictures et on stock tout dans une même liste
     _getWordsList(recognisedText).forEach(
