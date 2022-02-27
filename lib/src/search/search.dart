@@ -87,7 +87,7 @@ class _SearchState extends State<Search> {
     // On exécute la recherche en fonction de la query actuelle
     // Au premier build query = "" > Tous les items sont affichés
     _searchedResults = SearchFuzzy.searchByName(
-        query: _searchController.text,
+        query: _searchController.text.trim(),
         listItemsSearchable: _listItemsSearchable);
 
     return WillPopScope(
