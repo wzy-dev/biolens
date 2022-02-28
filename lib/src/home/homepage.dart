@@ -5,12 +5,14 @@ import 'package:biolens/shelf.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Homepage extends StatefulWidget {
   Homepage({Key? key}) : super(key: key);
@@ -20,6 +22,9 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
+  bool canUpdate = false;
+  String? updateLink;
+
   @override
   void initState() {
     // On initie le dossier de cache pour le scan
@@ -32,7 +37,24 @@ class _HomepageState extends State<Homepage> {
     Provider.of<List<Product>>(context, listen: false);
     Provider.of<List<Tag>>(context, listen: false);
 
+    final newVersion = NewVersion(
+      iOSId: 'com.polymathe.biolens',
+      androidId: 'com.polymathe.biolens',
+      iOSAppStoreCountry: "FR",
+    );
+    advancedStatusCheck(newVersion);
+
     super.initState();
+  }
+
+  advancedStatusCheck(NewVersion newVersion) async {
+    final status = await newVersion.getVersionStatus();
+    if (status != null) {
+      setState(() {
+        updateLink = status.appStoreLink;
+        canUpdate = status.canUpdate;
+      });
+    }
   }
 
   @override
@@ -65,46 +87,104 @@ class _HomepageState extends State<Homepage> {
             SafeArea(
               child: Align(
                 alignment: Alignment.topRight,
-                child: CupertinoButton(
-                  onPressed: () async {
-                    bool cameraIsDesactivate = false;
+                child: Column(
+                  children: [
+                    CupertinoButton(
+                      onPressed: () async {
+                        bool cameraIsDesactivate = false;
 
-                    // On désactive la caméra après la transition
-                    Future.delayed(
-                      Duration(milliseconds: 500),
-                      () => setState(
-                        () {
-                          _isActive = false;
-                          _cameraIsVisible = false;
-                          _cameraReloading = false;
-                        },
-                      ),
-                    ).then((value) => cameraIsDesactivate = true);
+                        // On désactive la caméra après la transition
+                        Future.delayed(
+                          Duration(milliseconds: 500),
+                          () => setState(
+                            () {
+                              _isActive = false;
+                              _cameraIsVisible = false;
+                              _cameraReloading = false;
+                            },
+                          ),
+                        ).then((value) => cameraIsDesactivate = true);
 
-                    await Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => About(),
-                      ),
-                    );
+                        await Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => About(),
+                          ),
+                        );
 
-                    // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
-                    Future.delayed(
-                      Duration(milliseconds: cameraIsDesactivate ? 300 : 500),
-                      () {
-                        setState(
+                        // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
+                        Future.delayed(
+                          Duration(
+                              milliseconds: cameraIsDesactivate ? 300 : 500),
                           () {
-                            _isActive = true;
+                            setState(
+                              () {
+                                _isActive = true;
+                              },
+                            );
                           },
                         );
                       },
-                    );
-                  },
-                  padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
-                  child: Icon(
-                    CupertinoIcons.info_circle,
-                    size: 26,
-                    color: Color.fromRGBO(241, 246, 249, 1),
-                  ),
+                      padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
+                      child: Icon(
+                        CupertinoIcons.info_circle,
+                        size: 27,
+                        color: Color.fromRGBO(241, 246, 249, 1),
+                      ),
+                    ),
+                    canUpdate
+                        ? CupertinoButton(
+                            onPressed: () async {
+                              if (updateLink == null) return;
+
+                              bool cameraIsDesactivate = false;
+
+                              // On désactive la caméra après la transition
+                              Future.delayed(
+                                Duration(milliseconds: 500),
+                                () => setState(
+                                  () {
+                                    _isActive = false;
+                                    _cameraIsVisible = false;
+                                    _cameraReloading = false;
+                                  },
+                                ),
+                              ).then((value) => cameraIsDesactivate = true);
+
+                              await launch(updateLink!);
+
+                              // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
+                              Future.delayed(
+                                Duration(
+                                    milliseconds:
+                                        cameraIsDesactivate ? 300 : 500),
+                                () {
+                                  setState(
+                                    () {
+                                      _isActive = true;
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
+                            child: Container(
+                              width: 27,
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child: Icon(
+                                  CupertinoIcons.arrow_down_circle_fill,
+                                  size: 26,
+                                  color: Color.fromARGB(255, 167, 49, 129),
+                                ),
+                              ),
+                            ),
+                          )
+                        : SizedBox(),
+                  ],
                 ),
               ),
             ),

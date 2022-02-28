@@ -8,6 +8,63 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+List<TextSpan> _getTextSpanChildren(String inputText) {
+  // On découpe la chaîne de caractères autour des balises BBCode [b|u|i] ou [/b|u|i] en prenant soint d'inclure la balise dans le split
+  RegExp matchesRegString = RegExp("(?=\\[(b|u|i)\\])|(?<=\\[\/(b|u|i)\\])");
+  List<String> listWords = inputText.split(matchesRegString).toList();
+
+  // Détecte une balise d'ouverture
+  RegExp openReg = RegExp("\\[(b|u|i)\\]");
+  // Détecte une balise de fermeture
+  RegExp closeReg = RegExp("\\[\/(b|u|i)\\]");
+  // Détecte le contenu d'une balise
+  RegExp contentReg = RegExp("(?<=\\[(b|u|i)\\])(.*?)(?=\\[\/(b|u|i)\\])");
+  // Détecte l'effet d'une balise
+  RegExp getEffect = RegExp("(?<=\\[\/?)(.*?)(?=\\])");
+
+  // List des textSpan qui sera retournée
+  List<TextSpan> textSpanChildren = [];
+
+  // Pour chaque chaîne de caractère qui a été splitée
+  listWords.forEach(
+    (input) {
+      // Si c'est un texte simple sans balise
+      if (!openReg.hasMatch(input) && !closeReg.hasMatch(input)) {
+        textSpanChildren.add(
+          TextSpan(text: input),
+        );
+        return;
+      }
+
+      // Si c'est dans une balise
+      if (contentReg.hasMatch(input)) {
+        // On récupère le texte dans la balise
+        String text = input.substring(contentReg.firstMatch(input)!.start,
+            contentReg.firstMatch(input)!.end);
+        // On récupère le nom de l'effet
+        String effect = input.substring(getEffect.firstMatch(input)!.start,
+            getEffect.firstMatch(input)!.end);
+
+        textSpanChildren.add(
+          TextSpan(
+              style: TextStyle(
+                fontWeight:
+                    (effect == "b" ? FontWeight.bold : FontWeight.normal),
+                decoration: (effect == "u"
+                    ? TextDecoration.underline
+                    : TextDecoration.none),
+                fontStyle:
+                    (effect == "i" ? FontStyle.italic : FontStyle.normal),
+              ),
+              text: text),
+        );
+        return;
+      }
+    },
+  );
+  return textSpanChildren;
+}
+
 class ProductViewer extends StatefulWidget {
   const ProductViewer({
     Key? key,
@@ -283,12 +340,16 @@ class _ProductViewerState extends State<ProductViewer> {
                                       return Container(
                                         padding:
                                             EdgeInsets.fromLTRB(0, 10, 0, 0),
-                                        child: Text(
-                                          "• " + element,
-                                          style: TextStyle(
-                                            color:
-                                                Color.fromRGBO(60, 60, 60, 1),
-                                            fontSize: 16,
+                                        child: RichText(
+                                          text: TextSpan(
+                                            text: "• ",
+                                            children:
+                                                _getTextSpanChildren(element),
+                                            style: TextStyle(
+                                              color:
+                                                  Color.fromRGBO(60, 60, 60, 1),
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -564,13 +625,23 @@ class GradientList extends StatelessWidget {
       tmpList.add(
         Container(
           margin: EdgeInsets.fromLTRB(0, 8, 0, 0),
-          child: Text(
-            "• " + element,
-            style: TextStyle(
-              color: Color.fromRGBO(60, 60, 60, 1),
-              fontSize: 16,
+          child: RichText(
+            text: TextSpan(
+              text: "• ",
+              children: _getTextSpanChildren(element),
+              style: TextStyle(
+                color: Color.fromRGBO(60, 60, 60, 1),
+                fontSize: 16,
+              ),
             ),
           ),
+          // child: Text(
+          //   "• " + element,
+          //   style: TextStyle(
+          //     color: Color.fromRGBO(60, 60, 60, 1),
+          //     fontSize: 16,
+          //   ),
+          // ),
         ),
       );
     });
