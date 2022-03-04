@@ -1,4 +1,4 @@
-import 'package:biolens/models/products/products.dart';
+import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,6 +17,14 @@ class ProductsList extends StatefulWidget {
 
 class _ProductsListState extends State<ProductsList> {
   bool _duringPop = false;
+  bool _isUniversityMode = false;
+
+  @override
+  void initState() {
+    Mode? mode = MyProvider.getCurrentMode(context, listen: false);
+    if (mode != null) _isUniversityMode = mode.mode == Modes.university;
+    super.initState();
+  }
 
   Item _itemBuilder(BuildContext context, int index) {
     Product product = widget.searchedList.listProducts[index];
@@ -77,8 +85,27 @@ class _ProductsListState extends State<ProductsList> {
               child: ListView.separated(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                itemBuilder: (BuildContext context, int index) =>
-                    _itemBuilder(context, index),
+                itemBuilder: (BuildContext context, int index) {
+                  return Column(
+                    children: [
+                      _itemBuilder(context, index),
+                      (index == widget.searchedList.listProducts.length - 1 &&
+                              _isUniversityMode)
+                          ? Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                "Produits disponible dans mon université uniquement",
+                                style: TextStyle(
+                                  color: CupertinoColors.systemGrey,
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            )
+                          : SizedBox(),
+                    ],
+                  );
+                },
                 itemCount: widget.searchedList.listProducts.length,
                 separatorBuilder: (BuildContext context, int index) => SizedBox(
                   height: 20,

@@ -52,9 +52,9 @@ class _MyAppState extends State<MyApp> {
       setState(() => _initializationStep = InitializationStep.loading);
     }
 
-    // drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
+    // TODO drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
     Future.wait([
-      ModelMethods.initDb(drop: false),
+      ModelMethods.initDb(drop: true),
       Firebase.initializeApp(),
     ]).then(
       (value) {

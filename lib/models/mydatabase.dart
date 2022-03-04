@@ -59,6 +59,14 @@ class ModelMethods {
     return count > 0;
   }
 
+  static Future<bool> lastUpdateRowExist(
+      DatabaseExecutor db, String table) async {
+    int count = firstIntValue(await db.query("last_update",
+            where: "tableName = ?", whereArgs: [table], limit: 1)) ??
+        0;
+    return count > 0;
+  }
+
   static Future<Database> initDb({bool drop = false}) async {
     final db = await openDatabase('mywine_db.db');
 
@@ -66,6 +74,9 @@ class ModelMethods {
       await db.execute("DROP TABLE IF EXISTS last_update");
       await db.execute("DROP TABLE IF EXISTS products");
       await db.execute("DROP TABLE IF EXISTS tags");
+      await db.execute("DROP TABLE IF EXISTS universities");
+      await db.execute("DROP TABLE IF EXISTS annotations");
+      await db.execute("DROP TABLE IF EXISTS mode");
     }
 
     if (!await ModelMethods.tableExists(db, "products")) {
@@ -97,13 +108,52 @@ class ModelMethods {
           )''');
     }
 
+    if (!await ModelMethods.tableExists(db, "universities")) {
+      // Create a table
+      await db.execute('''CREATE TABLE universities (
+            id STRING PRIMARY KEY,
+            editedAt INTEGER,
+            enabled INTEGER,
+            name STRING,
+            products STRING,
+            annotations STRING
+          )''');
+    }
+
+    if (!await ModelMethods.tableExists(db, "annotations")) {
+      // Create a table
+      await db.execute('''CREATE TABLE annotations (
+            id STRING PRIMARY KEY,
+            editedAt INTEGER,
+            enabled INTEGER,
+            university STRING,
+            note STRING,
+            product STRING
+          )''');
+    }
+
+    if (!await ModelMethods.tableExists(db, "mode")) {
+      // Create a table
+      await db.execute(
+          'CREATE TABLE mode (id INTEGER PRIMARY KEY AUTOINCREMENT, mode STRING, university STRING)');
+    }
+
     if (!await ModelMethods.tableExists(db, "last_update")) {
       // Create a table
       await db.execute(
           'CREATE TABLE last_update (id INTEGER PRIMARY KEY AUTOINCREMENT, tableName STRING, datetime INTEGER)');
-      db.insert("last_update", {"tableName": "products", "datetime": 0});
-      db.insert("last_update", {"tableName": "tags", "datetime": 0});
     }
+
+    if (!await lastUpdateRowExist(db, "products"))
+      db.insert("last_update", {"tableName": "products", "datetime": 0});
+    if (!await lastUpdateRowExist(db, "tags"))
+      db.insert("last_update", {"tableName": "tags", "datetime": 0});
+    if (!await lastUpdateRowExist(db, "universities"))
+      db.insert("last_update", {"tableName": "universities", "datetime": 0});
+    if (!await lastUpdateRowExist(db, "annotations"))
+      db.insert("last_update", {"tableName": "annotations", "datetime": 0});
+    if (!await lastUpdateRowExist(db, "mode"))
+      db.insert("last_update", {"tableName": "mode", "datetime": 0});
 
     return db;
   }

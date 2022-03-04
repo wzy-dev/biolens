@@ -1,3 +1,6 @@
+export 'universities/universities.dart';
+export 'universities/annotations.dart';
+export 'mode/mode.dart';
 export 'products/products.dart';
 export 'tags/tags.dart';
 export 'ids/ids.dart';

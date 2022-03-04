@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:collection/collection.dart';
 
 List<TextSpan> _getTextSpanChildren(String inputText) {
   // On découpe la chaîne de caractères autour des balises BBCode [b|u|i] ou [/b|u|i] en prenant soint d'inclure la balise dans le split
@@ -100,6 +101,16 @@ class _ProductViewerState extends State<ProductViewer> {
 
   @override
   Widget build(BuildContext context) {
+    University? _university = MyProvider.getCurrentUniversity(context);
+    Annotation? _annotation;
+
+    if (_university != null) {
+      _annotation = Provider.of<List<Annotation>>(context, listen: true)
+          .firstWhereOrNull((annotation) =>
+              annotation.university == _university.id &&
+              annotation.product == widget.product.id);
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.dark,
@@ -390,6 +401,74 @@ class _ProductViewerState extends State<ProductViewer> {
                                       ],
                                     ),
                                   ),
+                                  _annotation != null
+                                      ? Container(
+                                          padding: EdgeInsets.fromLTRB(
+                                              12, 12, 12, 12),
+                                          margin:
+                                              EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(10)),
+                                            color: Color.fromARGB(
+                                                255, 233, 214, 101),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color.fromRGBO(
+                                                    0, 0, 0, 0.1),
+                                                spreadRadius: 0.1,
+                                                blurRadius: 4,
+                                                offset: Offset(3, 3),
+                                              ),
+                                            ],
+                                          ),
+                                          child: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: _university!.name
+                                                      .toUpperCase(),
+                                                  style: TextStyle(
+                                                    color: Color.fromRGBO(
+                                                        60, 60, 60, 1),
+                                                    fontSize: 16,
+                                                    height: 1.4,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                WidgetSpan(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 4,
+                                                            right: 8.0),
+                                                    child: Icon(
+                                                      Icons.school,
+                                                      color: Color.fromRGBO(
+                                                        60,
+                                                        60,
+                                                        60,
+                                                        1,
+                                                      ),
+                                                      size: 18,
+                                                    ),
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: _annotation.note,
+                                                  style: TextStyle(
+                                                    color: Color.fromRGBO(
+                                                        60, 60, 60, 1),
+                                                    fontSize: 16,
+                                                    height: 1.4,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : SizedBox(),
                                 ],
                               )
                             : Container(),

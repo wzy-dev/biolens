@@ -60,11 +60,11 @@ class Product {
     names["tags"] = jsonDecode(names["tags"]);
     jsonCopy["names"] = names;
 
-    return _$ProductModelFromJson(jsonCopy);
+    return _$ProductFromJson(jsonCopy);
   }
 
   Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = _$ProductModelToJson(this);
+    Map<String, dynamic> json = _$ProductToJson(this);
     json = ModelMethods.boolToInt(json: json, property: "enabled");
     json = ModelMethods.listToJson(json: json, property: "cookbook");
     json = ModelMethods.listToJson(json: json, property: "ingredients");
@@ -79,6 +79,6 @@ class Product {
 
     data['id'] = documentSnapshot.reference.id;
 
-    return _$ProductModelFromJson(data);
+    return _$ProductFromJson(data);
   }
 }

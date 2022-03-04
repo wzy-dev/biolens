@@ -72,6 +72,13 @@ class _SearchState extends State<Search> {
     List<Product> listProducts = [
       ...Provider.of<List<Product>>(context, listen: true)
     ];
+    if (MyProvider.getCurrentUniversity(context) != null) {
+      listProducts = listProducts
+          .where((product) => MyProvider.getCurrentUniversity(context)!
+              .products
+              .contains(product.id))
+          .toList();
+    }
     listProducts.sort((a, b) => a.name.compareTo(b.name));
 
     // On crée la liste des tags avec un listener et on la trie par nom

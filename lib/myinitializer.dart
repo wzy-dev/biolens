@@ -29,7 +29,7 @@ class _MyInitializerState extends State<MyInitializer> {
   void initState() {
     _firebaseInitialization = Firebase.initializeApp();
     // drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
-    _databaseInitialization = ModelMethods.initDb(drop: true);
+    _databaseInitialization = ModelMethods.initDb(drop: false);
     super.initState();
   }
 

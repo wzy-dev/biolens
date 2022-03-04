@@ -22,8 +22,9 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  bool canUpdate = false;
-  String? updateLink;
+  bool _canUpdate = false;
+  String? _updateLink;
+  bool _modeIsSelected = true;
 
   @override
   void initState() {
@@ -36,6 +37,8 @@ class _HomepageState extends State<Homepage> {
     // Intitialisation des listeners
     Provider.of<List<Product>>(context, listen: false);
     Provider.of<List<Tag>>(context, listen: false);
+    Provider.of<List<University>>(context, listen: false);
+    Provider.of<List<Annotation>>(context, listen: false);
 
     final newVersion = NewVersion(
       iOSId: 'com.polymathe.biolens',
@@ -51,14 +54,16 @@ class _HomepageState extends State<Homepage> {
     final status = await newVersion.getVersionStatus();
     if (status != null) {
       setState(() {
-        updateLink = status.appStoreLink;
-        canUpdate = status.canUpdate;
+        _updateLink = status.appStoreLink;
+        _canUpdate = status.canUpdate;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    _modeIsSelected = MyProvider.getCurrentMode(context) != null;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.dark,
@@ -127,14 +132,91 @@ class _HomepageState extends State<Homepage> {
                       padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
                       child: Icon(
                         CupertinoIcons.info_circle,
-                        size: 27,
+                        size: 29,
                         color: Color.fromRGBO(241, 246, 249, 1),
                       ),
                     ),
-                    canUpdate
+                    CupertinoButton(
+                      onPressed: () async {
+                        bool cameraIsDesactivate = false;
+
+                        // On désactive la caméra après la transition
+                        Future.delayed(
+                          Duration(milliseconds: 500),
+                          () => setState(
+                            () {
+                              _isActive = false;
+                              _cameraIsVisible = false;
+                              _cameraReloading = false;
+                            },
+                          ),
+                        ).then((value) => cameraIsDesactivate = true);
+
+                        await Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => UniversitySelector(),
+                          ),
+                        );
+
+                        // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
+                        Future.delayed(
+                          Duration(
+                              milliseconds: cameraIsDesactivate ? 300 : 500),
+                          () {
+                            setState(
+                              () {
+                                _isActive = true;
+                              },
+                            );
+                          },
+                        );
+                      },
+                      padding: const EdgeInsets.all(0),
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  width: 2,
+                                  color: CupertinoColors.white,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Icon(
+                                  Icons.school_outlined,
+                                  size: 18,
+                                  color: Color.fromRGBO(241, 246, 249, 1),
+                                ),
+                              ),
+                            ),
+                          ),
+                          !_modeIsSelected
+                              ? Positioned(
+                                  right: 7,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 11,
+                                    height: 11,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: CupertinoColors.white),
+                                      shape: BoxShape.circle,
+                                      color: Color.fromARGB(255, 167, 49, 129),
+                                    ),
+                                  ),
+                                )
+                              : SizedBox(),
+                        ],
+                      ),
+                    ),
+                    _canUpdate
                         ? CupertinoButton(
                             onPressed: () async {
-                              if (updateLink == null) return;
+                              if (_updateLink == null) return;
 
                               bool cameraIsDesactivate = false;
 
@@ -150,7 +232,7 @@ class _HomepageState extends State<Homepage> {
                                 ),
                               ).then((value) => cameraIsDesactivate = true);
 
-                              await launch(updateLink!);
+                              await launch(_updateLink!);
 
                               // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
                               Future.delayed(

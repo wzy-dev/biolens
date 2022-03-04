@@ -8,3 +8,4 @@ export 'src/home/about.dart';
 export './src/viewer/custom_picture.dart';
 export 'first_open.dart';
 export 'src/home/camera_preview.dart';
+export 'src/home/university_selector.dart';
