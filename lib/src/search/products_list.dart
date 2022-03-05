@@ -94,7 +94,7 @@ class _ProductsListState extends State<ProductsList> {
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 10),
                               child: Text(
-                                "Produits disponible dans mon université uniquement",
+                                "Limité aux produits de votre université",
                                 style: TextStyle(
                                   color: CupertinoColors.systemGrey,
                                   fontSize: 13,
