@@ -12,6 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqlbrite/sqlbrite.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Homepage extends StatefulWidget {
@@ -24,7 +25,9 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   bool _canUpdate = false;
   String? _updateLink;
-  bool _modeIsSelected = true;
+  bool? _modeIsSelected;
+
+  Mode? mode;
 
   @override
   void initState() {
@@ -62,7 +65,16 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    _modeIsSelected = MyProvider.getCurrentMode(context) != null;
+    // On affiche un badge si le mode universitaire n'a jamais été ouvert
+    Provider.of<BriteDatabase>(context, listen: true)
+        .query("mode", limit: 1)
+        .then(
+      (value) {
+        bool newValue = _modeIsSelected = value.length > 0;
+        if (_modeIsSelected != newValue)
+          setState(() => _modeIsSelected = value.length > 0);
+      },
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -194,7 +206,7 @@ class _HomepageState extends State<Homepage> {
                               ),
                             ),
                           ),
-                          !_modeIsSelected
+                          _modeIsSelected == false
                               ? Positioned(
                                   right: 7,
                                   bottom: 0,
@@ -287,7 +299,7 @@ class _HomepageState extends State<Homepage> {
                           Radius.circular(10),
                         ),
                         child: Text(
-                          'Scanner',
+                          "Scanner",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w500,

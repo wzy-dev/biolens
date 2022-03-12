@@ -401,7 +401,8 @@ class _ProductViewerState extends State<ProductViewer> {
                                       ],
                                     ),
                                   ),
-                                  _annotation != null
+                                  _annotation != null &&
+                                          _annotation.note.length > 0
                                       ? Container(
                                           padding: EdgeInsets.fromLTRB(
                                               12, 12, 12, 12),

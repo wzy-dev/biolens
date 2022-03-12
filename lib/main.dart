@@ -54,7 +54,7 @@ class _MyAppState extends State<MyApp> {
 
     // TODO drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
     Future.wait([
-      ModelMethods.initDb(drop: true),
+      ModelMethods.initDb(drop: false),
       Firebase.initializeApp(),
     ]).then(
       (value) {
