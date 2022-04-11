@@ -5,6 +5,7 @@ import 'package:biolens/shelf.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -319,6 +320,8 @@ class _HomepageState extends State<Homepage> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () async {
+                        bool savedVisibilityOfCamera = _cameraIsVisible;
+
                         // On désactive la caméra si on change de page
                         setState(() {
                           _isActive = false;
@@ -359,7 +362,7 @@ class _HomepageState extends State<Homepage> {
                           () => setState(
                             () {
                               _isActive = true;
-                              _cameraIsVisible = true;
+                              _cameraIsVisible = savedVisibilityOfCamera;
                               _cameraReloading = true;
                             },
                           ),
@@ -402,12 +405,19 @@ class _HomepageState extends State<Homepage> {
                   ],
                 ),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  color: Color.fromRGBO(241, 246, 249, 1),
-                ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    color: Color.fromRGBO(241, 246, 249, 1),
+                    boxShadow: [
+                      BoxShadow(
+                          color:
+                              CupertinoColors.darkBackgroundGray.withAlpha(50),
+                          offset: Offset(0, -2),
+                          spreadRadius: 5,
+                          blurRadius: 7)
+                    ]),
               ),
             ),
           ],
@@ -603,7 +613,7 @@ class RepetitiveFailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: EdgeInsets.all(40),
+      insetPadding: EdgeInsets.all(35),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(15))),
       child: Container(
@@ -618,7 +628,8 @@ class RepetitiveFailDialog extends StatelessWidget {
                     color: Color.fromARGB(50, 167, 49, 129),
                     borderRadius: BorderRadius.all(Radius.circular(10))),
                 child: Padding(
-                  padding: const EdgeInsets.all(5),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 5, horizontal: 6),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -640,7 +651,10 @@ class RepetitiveFailDialog extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 25),
+              SvgPicture.asset(
+                "assets/lost.svg",
+                width: MediaQuery.of(context).size.width,
+              ),
               Padding(
                 padding: const EdgeInsets.all(6.0),
                 child: Column(

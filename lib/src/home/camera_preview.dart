@@ -156,41 +156,57 @@ class _CameraPreviewState extends State<CameraPreview>
                     ),
                   )
                 // Si les permissions sont refusées
-                : Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/camera_off.svg',
-                        width: MediaQuery.of(context).size.width,
-                        color: Color.fromRGBO(255, 255, 255, 0.05),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(30),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Vous devez donner la permission à biolens d'accéder à votre caméra pour utiliser le scanner !",
-                              style: TextStyle(
-                                  color: Color.fromRGBO(255, 255, 255, 0.7)),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              "Appuyez ici pour accéder aux paramètres et donner l'autorisation.",
-                              style: TextStyle(
-                                color: Color.fromRGBO(255, 255, 255, 0.7),
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                : Container(
+                    color: Color.fromARGB(255, 170, 180, 200),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/scanner.svg',
+                          width: MediaQuery.of(context).size.width * 0.8,
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 20),
+                          child: Text(
+                            "Autoriser l'accès à votre caméra afin d'utiliser le scanner",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Color.fromRGBO(55, 71, 79, 1),
+                            ),
+                          ),
+                        )
+                        // Padding(
+                        //   padding: const EdgeInsets.all(30),
+                        //   child: Column(
+                        //     mainAxisAlignment: MainAxisAlignment.center,
+                        //     crossAxisAlignment: CrossAxisAlignment.center,
+                        //     children: [
+                        //       Text(
+                        //         "Vous devez donner la permission à biolens d'accéder à votre caméra pour utiliser le scanner !",
+                        //         style: TextStyle(
+                        //             color: Color.fromRGBO(255, 255, 255, 0.7)),
+                        //         textAlign: TextAlign.center,
+                        //       ),
+                        //       SizedBox(
+                        //         height: 10,
+                        //       ),
+                        //       Text(
+                        //         "Appuyez ici pour accéder aux paramètres et donner l'autorisation.",
+                        //         style: TextStyle(
+                        //           color: Color.fromRGBO(255, 255, 255, 0.7),
+                        //           fontWeight: FontWeight.bold,
+                        //         ),
+                        //         textAlign: TextAlign.center,
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+                      ],
+                    ),
                   ),
       );
     }

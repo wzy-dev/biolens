@@ -52,6 +52,7 @@ class _MyAppState extends State<MyApp> {
       setState(() => _initializationStep = InitializationStep.loading);
     }
 
+    // ignore: todo
     // TODO drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
     Future.wait([
       ModelMethods.initDb(drop: false),

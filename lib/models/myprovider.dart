@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:sqlbrite/sqlbrite.dart';
+import 'package:collection/collection.dart';
 
 class MyProvider {
   static Mode? getCurrentMode(BuildContext context, {bool listen = true}) {
@@ -26,7 +27,7 @@ class MyProvider {
     if (mode.mode == Modes.all) return null;
 
     return Provider.of<List<University>>(context, listen: true)
-        .firstWhere((university) => university.id == mode!.university);
+        .firstWhereOrNull((university) => university.id == mode!.university);
   }
 
   static Map<String, dynamic> _mapFromFirestore(
