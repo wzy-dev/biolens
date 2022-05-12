@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
+// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -17,7 +18,9 @@ import 'package:sqlbrite/sqlbrite.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Homepage extends StatefulWidget {
-  Homepage({Key? key}) : super(key: key);
+  Homepage({
+    Key? key,
+  }) : super(key: key);
 
   @override
   _HomepageState createState() => _HomepageState();
@@ -32,17 +35,18 @@ class _HomepageState extends State<Homepage> {
 
   @override
   void initState() {
-    // On initie le dossier de cache pour le scan
-    _setDirectory();
-
-    FirebaseAnalytics.instance
-        .logScreenView(screenClass: "scanner", screenName: "scanner");
-
+    // print("build");
     // Intitialisation des listeners
     Provider.of<List<Product>>(context, listen: false);
     Provider.of<List<Tag>>(context, listen: false);
     Provider.of<List<University>>(context, listen: false);
     Provider.of<List<Annotation>>(context, listen: false);
+
+    // On initie le dossier de cache pour le scan
+    _setDirectory();
+
+    FirebaseAnalytics.instance
+        .logScreenView(screenClass: "scanner", screenName: "scanner");
 
     final newVersion = NewVersion(
       iOSId: 'com.polymathe.biolens',
@@ -123,11 +127,7 @@ class _HomepageState extends State<Homepage> {
                           ),
                         ).then((value) => cameraIsDesactivate = true);
 
-                        await Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => About(),
-                          ),
-                        );
+                        await Navigator.of(context).pushNamed("/about");
 
                         // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
                         Future.delayed(
@@ -165,11 +165,8 @@ class _HomepageState extends State<Homepage> {
                           ),
                         ).then((value) => cameraIsDesactivate = true);
 
-                        await Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => UniversitySelector(),
-                          ),
-                        );
+                        await Navigator.of(context)
+                            .pushNamed("/select/university");
 
                         // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
                         Future.delayed(
@@ -330,31 +327,8 @@ class _HomepageState extends State<Homepage> {
                         });
                         await Future.delayed(
                           Duration(milliseconds: 100),
-                          () async => await Navigator.of(context).push(
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, anotherAnimation) =>
-                                      Search(),
-                              fullscreenDialog: true,
-                              transitionDuration: Duration(milliseconds: 500),
-                              reverseTransitionDuration:
-                                  Duration(milliseconds: 350),
-                              transitionsBuilder: (context, animation,
-                                  anotherAnimation, child) {
-                                animation = CurvedAnimation(
-                                  curve: Curves.linearToEaseOut,
-                                  parent: animation,
-                                );
-                                return SlideTransition(
-                                  position: Tween(
-                                    begin: Offset(0, 1),
-                                    end: Offset(0.0, 0.0),
-                                  ).animate(animation),
-                                  child: child,
-                                );
-                              },
-                            ),
-                          ),
+                          () async =>
+                              await Navigator.of(context).pushNamed("/search"),
                         );
 
                         Future.delayed(
@@ -554,13 +528,7 @@ class _HomepageState extends State<Homepage> {
             name: "to_scan",
             parameters: {"step": "success", "name": product.name});
 
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => ProductViewer(
-              product: product,
-            ),
-          ),
-        );
+        await Navigator.of(context).pushNamed("/product/${product.id}");
 
         Future.delayed(Duration(milliseconds: cameraIsDesactivate ? 300 : 500),
             () {

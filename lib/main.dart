@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -39,6 +40,8 @@ class _MyAppState extends State<MyApp> {
     // On cherche si le tutoriel a déjà été lu
     SharedPreferences.getInstance().then((prefs) => setState(
         () => tutorialIsReaded = prefs.getBool("tutorialReaded") ?? false));
+    // SharedPreferences.getInstance()
+    //     .then((prefs) => prefs.setBool("tutorialReaded", false));
 
     // On lance l'initialialisation de la base de données et de Firebase / FirebaseAuth
     _initializer();
@@ -52,13 +55,12 @@ class _MyAppState extends State<MyApp> {
       setState(() => _initializationStep = InitializationStep.loading);
     }
 
-    // ignore: todo
-    // TODO drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
+    // drop : true pour le debuggage (réinitialisation de la base de donnée à chaque rechargement)
     Future.wait([
       ModelMethods.initDb(drop: false),
       Firebase.initializeApp(),
     ]).then(
-      (value) {
+      (value) async {
         // On utilise la database qui a été retournée pour créer la briteDb
         List list = value;
         Database database = list[0];
@@ -114,9 +116,7 @@ class _MyAppState extends State<MyApp> {
         key: Key(FirebaseAuth.instance.currentUser!.uid),
         providers: MyProvider.generateProvidersList(
             briteDb: _briteDb, user: FirebaseAuth.instance.currentUser!),
-        child: CustomCupertinoApp(
-          home: Homepage(),
-        ),
+        child: CustomCupertinoApp(),
       );
     }
 
@@ -154,10 +154,9 @@ class FullScreenLoader extends StatelessWidget {
 }
 
 class CustomCupertinoApp extends StatelessWidget {
-  const CustomCupertinoApp({Key? key, required this.home}) : super(key: key);
+  const CustomCupertinoApp({Key? key, this.home}) : super(key: key);
 
-  final Widget home;
-
+  final Widget? home;
   @override
   Widget build(BuildContext context) {
     return CupertinoApp(
@@ -168,13 +167,19 @@ class CustomCupertinoApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: [Locale('fr', 'FR')],
-      initialRoute: '/',
+      initialRoute: "/",
+      onGenerateRoute: home != null
+          ? null
+          : (routeSettings) => MyNavigator.onGenerateRoute(
+                context: context,
+                settings: routeSettings,
+              ),
+      home: home ?? null,
       title: 'biolens',
       theme: CupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: Color.fromARGB(255, 55, 104, 180),
       ),
-      home: home,
     );
   }
 }

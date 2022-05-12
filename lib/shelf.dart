@@ -1,3 +1,4 @@
+export 'src/navigator.dart';
 export 'src/home/homepage.dart';
 export './src/search/search.dart';
 export './src/search/search_fuzzy.dart';

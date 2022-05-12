@@ -150,13 +150,8 @@ class _ItemState extends State<Item> {
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: () => Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (context) => ProductViewer(
-            product: widget.product,
-          ),
-        ),
-      ),
+      onPressed: () =>
+          Navigator.of(context).pushNamed("/product/${widget.product.id}"),
       child: Container(
         padding: EdgeInsets.all(10),
         margin: EdgeInsets.fromLTRB(

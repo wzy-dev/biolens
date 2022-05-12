@@ -1,4 +1,3 @@
-import 'package:biolens/shelf.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -45,11 +44,8 @@ class About extends StatelessWidget {
                             style: TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    onPressed: () => Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => FirstOpen(),
-                          ),
-                        )),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed("/tutorial")),
               ),
               AnswerBlock(
                 answer: "À quoi sert biolens ?",
@@ -114,28 +110,6 @@ class About extends StatelessWidget {
                   SizedBox(
                     width: 13,
                   ),
-                  // Expanded(
-                  //   flex: 1,
-                  //   child: Container(
-                  //     decoration: BoxDecoration(
-                  //       borderRadius: BorderRadius.all(Radius.circular(10)),
-                  //       color: Color.fromRGBO(181, 87, 74, 1),
-                  //     ),
-                  //     child: CupertinoButton(
-                  //       padding: const EdgeInsets.all(20),
-                  //       onPressed: () => launch("sms:33620905177"),
-                  //       child: Column(
-                  //         children: [
-                  //           Icon(
-                  //             CupertinoIcons.phone,
-                  //             color: CupertinoColors.white,
-                  //             size: 50,
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
               SizedBox(
