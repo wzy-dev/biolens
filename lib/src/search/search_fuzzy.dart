@@ -82,7 +82,7 @@ class SearchFuzzy {
           : null,
     );
 
-    late BestResult? bestResult;
+    BestResult? bestResult;
     SearchedList response = SearchedList(listProducts: []);
 
     // On sélectionne le bestResult (tag OU product) parmis le bestResultList (tag ET product)

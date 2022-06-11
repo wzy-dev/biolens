@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
-// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -242,7 +241,8 @@ class _HomepageState extends State<Homepage> {
                                 ),
                               ).then((value) => cameraIsDesactivate = true);
 
-                              await launch(_updateLink!);
+                              await launchUrl(
+                                  Uri(scheme: "https", path: _updateLink));
 
                               // On s'assure que la transition de désactivation de caméra soit terminée avant de la réactiver
                               Future.delayed(

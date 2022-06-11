@@ -1,14 +1,25 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:collection/collection.dart';
+import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 class ClipPad extends CustomClipper<Rect> {
   final EdgeInsets padding;
@@ -100,6 +111,10 @@ class _ProductViewerState extends State<ProductViewer> {
   late List<Tag> _listTagsCollection;
   late List<Product> _listProductsCollection;
   late Product? _product;
+  GlobalKey _renderObjectKey = GlobalKey();
+  ScreenshotController screenshotController = ScreenshotController();
+  bool _modalShareGeneration = false;
+  bool _qrCodeGeneration = false;
 
   @override
   void initState() {
@@ -119,6 +134,231 @@ class _ProductViewerState extends State<ProductViewer> {
     super.initState();
   }
 
+  Future<void> writeToFile(ByteData data, String path) async {
+    final buffer = data.buffer;
+    await File(path).writeAsBytes(
+        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+  }
+
+  Future<ByteData?> _getWidgetImage() async {
+    try {
+      RenderRepaintBoundary? boundary = _renderObjectKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
+      final image = await boundary?.toImage();
+      return await image?.toByteData(format: ImageByteFormat.png);
+    } catch (exception) {
+      return null;
+    }
+  }
+
+  _shareQrCode(StateSetter setState) async {
+    Directory tempDir = await getTemporaryDirectory();
+    String tempPath = tempDir.path;
+    final ts = DateTime.now().millisecondsSinceEpoch.toString();
+    String path = '$tempPath/$ts.png';
+    // final ByteData? picData = await _getWidgetImage();
+    final ByteData? picData =
+        ByteData.sublistView(await screenshotController.captureFromWidget(
+      Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.width,
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Container(
+            padding: const EdgeInsets.all(20),
+            color: CupertinoColors.white,
+            child: Center(
+              child: PrettyQr(
+                elementColor: CupertinoTheme.of(context).primaryColor,
+                size: 400,
+                data: await _generateLink(),
+                roundEdges: true,
+                image: AssetImage("assets/qr_code_logo.png"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    if (picData != null) {
+      await writeToFile(picData, path);
+
+      await Share.shareFiles(
+        [path],
+        mimeTypes: ["image/png"],
+        subject: 'biolens - ${_product?.name ?? 404}',
+      );
+
+      setState(() {
+        _qrCodeGeneration = false;
+      });
+    }
+  }
+
+  _shareLink() async {
+    await Share.share(
+      await _generateLink(),
+      subject: 'biolens - ${_product?.name ?? 404}',
+    );
+  }
+
+  Future<String> _generateLink() async {
+    final dynamicLinkParams = DynamicLinkParameters(
+      link: Uri.parse("https://biolens.app/link/product/${_product?.id}"),
+      uriPrefix: "https://biolens.page.link",
+      androidParameters: const AndroidParameters(
+          packageName: "com.polymathe.biolens", minimumVersion: 20),
+      iosParameters: const IOSParameters(
+        bundleId: "com.polymathe.biolens",
+        appStoreId: "1600484395", // dont work in simulator
+        minimumVersion: "20",
+      ),
+      socialMetaTagParameters: SocialMetaTagParameters(
+        title: "biolens - ${_product?.name ?? 404}",
+        imageUrl: (_product != null && _product!.picture != null
+            ? Uri.parse(
+                "https://firebasestorage.googleapis.com/v0/b/biolens-ef25c.appspot.com/o/uploads%2F${_product!.picture}?alt=media")
+            : null),
+      ),
+      navigationInfoParameters:
+          const NavigationInfoParameters(forcedRedirectEnabled: true),
+    );
+    final dynamicLink =
+        await FirebaseDynamicLinks.instance.buildShortLink(dynamicLinkParams);
+
+    return dynamicLink.shortUrl.toString();
+  }
+
+  _drawShareModal() async {
+    setState(() {
+      _modalShareGeneration = true;
+    });
+    print("draw");
+    final RepaintBoundary qrcode = RepaintBoundary(
+      key: _renderObjectKey,
+      child: Container(
+        decoration: BoxDecoration(
+            color: CupertinoColors.white,
+            borderRadius: BorderRadius.all(Radius.circular(16))),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: PrettyQr(
+            elementColor: CupertinoTheme.of(context).primaryColor,
+            size: 150,
+            data: await _generateLink(),
+            errorCorrectLevel: QrErrorCorrectLevel.Q,
+            roundEdges: true,
+            image: AssetImage("assets/qr_code_logo.png"),
+          ),
+        ),
+      ),
+    );
+
+    showModalBottomSheet(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          child: Column(
+            children: [
+              Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
+                    child: Text(
+                      "Partager",
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  )),
+              Expanded(
+                child: ShaderMask(
+                  shaderCallback: (Rect rect) {
+                    return LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        CupertinoColors.white,
+                        Color.fromRGBO(0, 0, 0, 0),
+                        Color.fromRGBO(0, 0, 0, 0),
+                        CupertinoColors.white
+                      ],
+                      stops: [0.0, 0.02, 0.98, 1.0],
+                    ).createShader(rect);
+                  },
+                  blendMode: BlendMode.dstOut,
+                  child: Container(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CupertinoButton(
+                            child: Stack(children: [
+                              qrcode,
+                              _qrCodeGeneration
+                                  ? Positioned.fill(
+                                      child: Container(
+                                      color: Color.fromRGBO(255, 255, 255,
+                                          _qrCodeGeneration ? 0.8 : 0),
+                                      child: Center(
+                                          child: CupertinoActivityIndicator(
+                                        color: CupertinoColors.black,
+                                      )),
+                                    ))
+                                  : SizedBox()
+                            ]),
+                            onPressed: _qrCodeGeneration
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _qrCodeGeneration = true;
+                                    });
+                                    _shareQrCode(setState);
+                                  },
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "ou",
+                            style: TextStyle(
+                                color: CupertinoColors.systemGrey,
+                                fontSize: 18),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 25),
+                            child: CupertinoButton(
+                              child: Text("Partager un lien vers ce produit"),
+                              color: CupertinoTheme.of(context).primaryColor,
+                              onPressed: () => _shareLink(),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    setState(() {
+      _modalShareGeneration = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     University? _university = MyProvider.getCurrentUniversity(context);
@@ -130,6 +370,12 @@ class _ProductViewerState extends State<ProductViewer> {
 
       _product = _listProductsCollection
           .firstWhereOrNull((product) => product.id == widget.product);
+    }
+
+    if (_listTagsCollection.length == 0) {
+      _listTagsCollection =
+          List<Tag>.from(Provider.of<List<Tag>>(context, listen: true));
+      _listTagsCollection.sort((a, b) => a.name.compareTo(b.name));
     }
 
     if (_university != null && _product != null) {
@@ -192,12 +438,27 @@ class _ProductViewerState extends State<ProductViewer> {
                           padding: const EdgeInsetsDirectional.all(0),
                           trailing: Container(
                             margin: const EdgeInsets.only(right: 8),
-                            child: CupertinoButton(
-                              minSize: 0,
-                              padding: const EdgeInsets.all(0),
-                              child: Icon(Icons.clear, size: 30),
-                              onPressed: () => Navigator.of(context)
-                                  .popUntil((route) => route.isFirst),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CupertinoButton(
+                                  minSize: 0,
+                                  padding: const EdgeInsets.all(0),
+                                  child:
+                                      Icon(Icons.ios_share_outlined, size: 25),
+                                  onPressed: _modalShareGeneration
+                                      ? null
+                                      : () => _drawShareModal(),
+                                ),
+                                SizedBox(width: 5),
+                                CupertinoButton(
+                                  minSize: 0,
+                                  padding: const EdgeInsets.all(0),
+                                  child: Icon(Icons.clear, size: 32),
+                                  onPressed: () => Navigator.of(context)
+                                      .popUntil((route) => route.isFirst),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -328,278 +589,345 @@ class _ProductViewerState extends State<ProductViewer> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: _product == null
-                      ? Container(
-                          child: _listProductsCollection.length == 0
-                              ? Center(
-                                  child: CupertinoActivityIndicator(),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SvgPicture.asset(
-                                      "assets/404.svg",
-                                      width: MediaQuery.of(context).size.width,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 25),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Ce produit est introuvable 😢",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            "Il a peut-être été supprimé ou une erreur s'est glissée dans le lien. Appuyez sur la fléche de retour en haut à gauche pour retourner à la liste des produits !",
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                        )
-                      : NotificationListener<ScrollNotification>(
-                          onNotification: (notification) {
-                            if (_headerKey.currentContext != null &&
-                                !_transitionIsRunning) {
-                              // On met un callback pour éviter le warning en cas de setState durant le build
-                              WidgetsBinding.instance!
-                                  .addPostFrameCallback((_) {
-                                RenderBox render = _headerKey.currentContext!
-                                    .findRenderObject() as RenderBox;
-                                if (_defaultHeaderHeight == null) {
-                                  setState(() {
-                                    _defaultHeaderHeight = render.size.height;
-                                  });
-                                }
-
-                                double height = _defaultHeaderHeight! -
-                                    _scrollController.position.pixels;
-                                if (height < 0) height = 0;
-                                if (height > _defaultHeaderHeight!)
-                                  height = _defaultHeaderHeight!;
-
-                                setState(() {
-                                  _headerHeight = height;
-                                });
-                              });
-                            }
-                            return true;
-                          },
-                          child: ListView(
-                            controller: _scrollController,
-                            children: [
-                              SizedBox(
-                                height: 10,
-                              ),
-                              GradientList(
-                                list: _product!.names.indications,
-                                title: "INDICATIONS",
-                                colorBegin: Color.fromRGBO(125, 196, 93, 1),
-                                colorEnd: Color.fromRGBO(100, 214, 178, 1),
-                                colorTitle: Color.fromRGBO(75, 117, 55, 0.8),
-                                icon: Icons.check,
-                              ),
-                              GradientList(
-                                list: _product!.precautions,
-                                title: "PRECAUTIONS",
-                                colorBegin: Color.fromRGBO(237, 190, 59, 1),
-                                colorEnd: Color.fromRGBO(222, 95, 110, 1),
-                                colorTitle: Color.fromRGBO(143, 114, 36, 0.8),
-                                icon: Icons.warning_rounded,
-                              ),
-                              GradientList(
-                                list: _product!.ingredients,
-                                title: "COMPOSITION",
-                                colorBegin: Color.fromRGBO(134, 219, 224, 1),
-                                colorEnd: Color.fromRGBO(121, 143, 219, 1),
-                                colorTitle: Color.fromRGBO(73, 120, 122, 0.8),
-                                icon: Icons.biotech,
-                              ),
-                              Container(
-                                margin: EdgeInsets.fromLTRB(30, 30, 30, 30),
-                                width: double.infinity,
-                                child: _product!.cookbook.length > 0
-                                    ? Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Utilisation",
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w600,
-                                              color: CupertinoTheme.of(context)
-                                                  .primaryColor,
+                StreamBuilder<Object>(
+                    stream: null,
+                    builder: (context, snapshot) {
+                      return Expanded(
+                        child: Screenshot(
+                          controller: screenshotController,
+                          child: _product == null
+                              ? Container(
+                                  child: _listProductsCollection.length == 0
+                                      ? Center(
+                                          child: CupertinoActivityIndicator(),
+                                        )
+                                      : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SvgPicture.asset(
+                                              "assets/404.svg",
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
                                             ),
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: _product!.cookbook
-                                                .map<Widget>((element) {
-                                              return Container(
-                                                padding: EdgeInsets.fromLTRB(
-                                                    0, 10, 0, 0),
-                                                child: RichText(
-                                                  text: TextSpan(
-                                                    text: "• ",
-                                                    children:
-                                                        _getTextSpanChildren(
-                                                            element),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 25),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Ce produit est introuvable 😢",
                                                     style: TextStyle(
-                                                      color: Color.fromRGBO(
-                                                          60, 60, 60, 1),
-                                                      fontSize: 16,
-                                                    ),
+                                                        fontWeight:
+                                                            FontWeight.bold),
                                                   ),
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                top: 15.0),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  "Source :",
-                                                  style: TextStyle(
+                                                  SizedBox(height: 10),
+                                                  Text(
+                                                    "Il a peut-être été supprimé ou une erreur s'est glissée dans le lien. Appuyez sur la fléche de retour en haut à gauche pour retourner à la liste des produits !",
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                )
+                              : NotificationListener<ScrollNotification>(
+                                  onNotification: (notification) {
+                                    if (_headerKey.currentContext != null &&
+                                        !_transitionIsRunning) {
+                                      // On met un callback pour éviter le warning en cas de setState durant le build
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        RenderBox render = _headerKey
+                                            .currentContext!
+                                            .findRenderObject() as RenderBox;
+                                        if (_defaultHeaderHeight == null) {
+                                          setState(() {
+                                            _defaultHeaderHeight =
+                                                render.size.height;
+                                          });
+                                        }
+
+                                        double height = _defaultHeaderHeight! -
+                                            _scrollController.position.pixels;
+                                        if (height < 0) height = 0;
+                                        if (height > _defaultHeaderHeight!)
+                                          height = _defaultHeaderHeight!;
+
+                                        setState(() {
+                                          _headerHeight = height;
+                                        });
+                                      });
+                                    }
+                                    return true;
+                                  },
+                                  child: ListView(
+                                    controller: _scrollController,
+                                    children: [
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      GradientList(
+                                        list: _product!.names.indications,
+                                        title: "INDICATIONS",
+                                        colorBegin:
+                                            Color.fromRGBO(125, 196, 93, 1),
+                                        colorEnd:
+                                            Color.fromRGBO(100, 214, 178, 1),
+                                        colorTitle:
+                                            Color.fromRGBO(75, 117, 55, 0.8),
+                                        icon: Icons.check,
+                                      ),
+                                      GradientList(
+                                        list: _product!.precautions,
+                                        title: "PRECAUTIONS",
+                                        colorBegin:
+                                            Color.fromRGBO(237, 190, 59, 1),
+                                        colorEnd:
+                                            Color.fromRGBO(222, 95, 110, 1),
+                                        colorTitle:
+                                            Color.fromRGBO(143, 114, 36, 0.8),
+                                        icon: Icons.warning_rounded,
+                                      ),
+                                      GradientList(
+                                        list: _product!.ingredients,
+                                        title: "COMPOSITION",
+                                        colorBegin:
+                                            Color.fromRGBO(134, 219, 224, 1),
+                                        colorEnd:
+                                            Color.fromRGBO(121, 143, 219, 1),
+                                        colorTitle:
+                                            Color.fromRGBO(73, 120, 122, 0.8),
+                                        icon: Icons.biotech,
+                                      ),
+                                      Container(
+                                        margin:
+                                            EdgeInsets.fromLTRB(30, 30, 30, 30),
+                                        width: double.infinity,
+                                        child: _product!.cookbook.length > 0
+                                            ? Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Utilisation",
+                                                    style: TextStyle(
+                                                      fontSize: 20,
                                                       fontWeight:
-                                                          FontWeight.bold,
-                                                      color: CupertinoColors
-                                                          .systemGrey,
-                                                      fontSize: 15),
-                                                ),
-                                                SizedBox(width: 8),
-                                                Expanded(
-                                                  child: CupertinoButton(
-                                                    minSize: 0,
-                                                    alignment:
-                                                        Alignment.centerLeft,
-                                                    padding:
-                                                        const EdgeInsets.all(0),
-                                                    onPressed: _product!
-                                                                    .source !=
-                                                                null &&
-                                                            Uri.parse(_product!
-                                                                    .source!)
-                                                                .isAbsolute
-                                                        ? () => launch(
-                                                            _product!.source!)
-                                                        : null,
-                                                    child: _drawSource(
-                                                      name: _product!.name,
-                                                      brand: _product!.brand,
-                                                      source: _product!.source,
+                                                          FontWeight.w600,
+                                                      color: CupertinoTheme.of(
+                                                              context)
+                                                          .primaryColor,
                                                     ),
                                                   ),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          _annotation != null &&
-                                                  _annotation.note.length > 0
-                                              ? Container(
-                                                  padding: EdgeInsets.fromLTRB(
-                                                      12, 12, 12, 12),
-                                                  margin: EdgeInsets.fromLTRB(
-                                                      0, 20, 0, 0),
-                                                  width: double.infinity,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                10)),
-                                                    color: Color.fromARGB(
-                                                        255, 233, 214, 101),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Color.fromRGBO(
-                                                            0, 0, 0, 0.1),
-                                                        spreadRadius: 0.1,
-                                                        blurRadius: 4,
-                                                        offset: Offset(3, 3),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: RichText(
-                                                    text: TextSpan(
-                                                      children: [
-                                                        TextSpan(
-                                                          text: _university!
-                                                              .name
-                                                              .toUpperCase(),
-                                                          style: TextStyle(
-                                                            color:
-                                                                Color.fromRGBO(
-                                                                    60,
-                                                                    60,
-                                                                    60,
-                                                                    1),
-                                                            fontSize: 16,
-                                                            height: 1.4,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                        WidgetSpan(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    left: 4,
-                                                                    right: 8.0),
-                                                            child: Icon(
-                                                              Icons.school,
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: _product!.cookbook
+                                                        .map<Widget>((element) {
+                                                      return Container(
+                                                        padding:
+                                                            EdgeInsets.fromLTRB(
+                                                                0, 10, 0, 0),
+                                                        child: RichText(
+                                                          text: TextSpan(
+                                                            text: "• ",
+                                                            children:
+                                                                _getTextSpanChildren(
+                                                                    element),
+                                                            style: TextStyle(
                                                               color: Color
                                                                   .fromRGBO(
-                                                                60,
-                                                                60,
-                                                                60,
-                                                                1,
-                                                              ),
-                                                              size: 18,
+                                                                      60,
+                                                                      60,
+                                                                      60,
+                                                                      1),
+                                                              fontSize: 16,
                                                             ),
                                                           ),
                                                         ),
-                                                        TextSpan(
-                                                          text:
-                                                              _annotation.note,
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 15.0),
+                                                    child: Row(
+                                                      children: [
+                                                        Text(
+                                                          "Source :",
                                                           style: TextStyle(
-                                                            color:
-                                                                Color.fromRGBO(
-                                                                    60,
-                                                                    60,
-                                                                    60,
-                                                                    1),
-                                                            fontSize: 16,
-                                                            height: 1.4,
-                                                          ),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  CupertinoColors
+                                                                      .systemGrey,
+                                                              fontSize: 15),
                                                         ),
+                                                        SizedBox(width: 8),
+                                                        Expanded(
+                                                          child:
+                                                              CupertinoButton(
+                                                            minSize: 0,
+                                                            alignment: Alignment
+                                                                .centerLeft,
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(0),
+                                                            onPressed: _product!.source !=
+                                                                        null &&
+                                                                    Uri.parse(_product!
+                                                                            .source!)
+                                                                        .isAbsolute
+                                                                ? () => launchUrl(Uri(
+                                                                    scheme:
+                                                                        "https",
+                                                                    path: _product!
+                                                                        .source!))
+                                                                : null,
+                                                            child: _drawSource(
+                                                              name: _product!
+                                                                  .name,
+                                                              brand: _product!
+                                                                  .brand,
+                                                              source: _product!
+                                                                  .source,
+                                                            ),
+                                                          ),
+                                                        )
                                                       ],
                                                     ),
                                                   ),
-                                                )
-                                              : SizedBox(),
-                                        ],
-                                      )
-                                    : Container(),
-                              ),
-                              _drawTagsList(),
-                              SizedBox(
-                                height: 20,
-                              ),
-                            ],
-                          ),
+                                                  _annotation != null &&
+                                                          _annotation
+                                                                  .note.length >
+                                                              0
+                                                      ? Container(
+                                                          padding: EdgeInsets
+                                                              .fromLTRB(12, 12,
+                                                                  12, 12),
+                                                          margin: EdgeInsets
+                                                              .fromLTRB(
+                                                                  0, 20, 0, 0),
+                                                          width:
+                                                              double.infinity,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .all(Radius
+                                                                        .circular(
+                                                                            10)),
+                                                            color:
+                                                                Color.fromARGB(
+                                                                    255,
+                                                                    233,
+                                                                    214,
+                                                                    101),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Color
+                                                                    .fromRGBO(
+                                                                        0,
+                                                                        0,
+                                                                        0,
+                                                                        0.1),
+                                                                spreadRadius:
+                                                                    0.1,
+                                                                blurRadius: 4,
+                                                                offset: Offset(
+                                                                    3, 3),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              children: [
+                                                                TextSpan(
+                                                                  text: _university!
+                                                                      .name
+                                                                      .toUpperCase(),
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: Color
+                                                                        .fromRGBO(
+                                                                            60,
+                                                                            60,
+                                                                            60,
+                                                                            1),
+                                                                    fontSize:
+                                                                        16,
+                                                                    height: 1.4,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                                WidgetSpan(
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                            .only(
+                                                                        left: 4,
+                                                                        right:
+                                                                            8.0),
+                                                                    child: Icon(
+                                                                      Icons
+                                                                          .school,
+                                                                      color: Color
+                                                                          .fromRGBO(
+                                                                        60,
+                                                                        60,
+                                                                        60,
+                                                                        1,
+                                                                      ),
+                                                                      size: 18,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                TextSpan(
+                                                                  text:
+                                                                      _annotation
+                                                                          .note,
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: Color
+                                                                        .fromRGBO(
+                                                                            60,
+                                                                            60,
+                                                                            60,
+                                                                            1),
+                                                                    fontSize:
+                                                                        16,
+                                                                    height: 1.4,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : SizedBox(),
+                                                ],
+                                              )
+                                            : Container(),
+                                      ),
+                                      _drawTagsList(),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                         ),
-                ),
+                      );
+                    }),
               ],
             ),
           ),
@@ -877,3 +1205,4 @@ class GradientList extends StatelessWidget {
     );
   }
 }
+// 

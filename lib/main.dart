@@ -1,10 +1,11 @@
 // ignore_for_file: cancel_subscriptions
 import 'dart:async';
+import 'dart:io';
 
+import 'package:app_links/app_links.dart';
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -34,6 +35,7 @@ class _MyAppState extends State<MyApp> {
   InitializationStep _initializationStep = InitializationStep.loading;
   bool? tutorialIsReaded;
   late BriteDatabase _briteDb;
+  String? _initialLink;
 
   @override
   void initState() {
@@ -87,9 +89,19 @@ class _MyAppState extends State<MyApp> {
 
     // Maintenant que Firebase est initialisé on peut connecter l'utilisateur de façon anonyme
     FirebaseAuth.instance.signInAnonymously().then(
-      (value) {
+      (value) async {
         // Si la connexion est un succès on informe via le state une fois pour éviter les boucles
         if (_initializationStep == InitializationStep.success) return;
+
+        if (Platform.isIOS) {
+          final _appLinks = AppLinks();
+
+          // Get the initial/first link.
+          // This is useful when app was terminated (i.e. not started)
+          final uri = await _appLinks.getInitialAppLink();
+          _initialLink = uri?.path;
+        }
+
         setState(() => _initializationStep = InitializationStep.success);
       },
     ).onError((error, stackTrace) async {
@@ -116,7 +128,9 @@ class _MyAppState extends State<MyApp> {
         key: Key(FirebaseAuth.instance.currentUser!.uid),
         providers: MyProvider.generateProvidersList(
             briteDb: _briteDb, user: FirebaseAuth.instance.currentUser!),
-        child: CustomCupertinoApp(),
+        child: CustomCupertinoApp(
+          initialLink: _initialLink,
+        ),
       );
     }
 
@@ -154,9 +168,12 @@ class FullScreenLoader extends StatelessWidget {
 }
 
 class CustomCupertinoApp extends StatelessWidget {
-  const CustomCupertinoApp({Key? key, this.home}) : super(key: key);
+  const CustomCupertinoApp({Key? key, this.home, this.initialLink})
+      : super(key: key);
 
   final Widget? home;
+  final String? initialLink;
+
   @override
   Widget build(BuildContext context) {
     return CupertinoApp(
@@ -167,7 +184,7 @@ class CustomCupertinoApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: [Locale('fr', 'FR')],
-      initialRoute: "/",
+      initialRoute: initialLink ?? "/",
       onGenerateRoute: home != null
           ? null
           : (routeSettings) => MyNavigator.onGenerateRoute(

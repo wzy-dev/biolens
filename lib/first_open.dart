@@ -654,7 +654,7 @@ class _ContentTutorialFirstState extends State<ContentTutorialFirst> {
 
   @override
   void initState() {
-    WidgetsBinding.instance!.addPostFrameCallback((_) => Future.delayed(
+    WidgetsBinding.instance.addPostFrameCallback((_) => Future.delayed(
         Duration(milliseconds: 300),
         () => setState(() => _svgIsDrawing = true)));
 

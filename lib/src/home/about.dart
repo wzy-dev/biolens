@@ -93,8 +93,8 @@ class About extends StatelessWidget {
                       ),
                       child: CupertinoButton(
                         padding: const EdgeInsets.all(20),
-                        onPressed: () =>
-                            launch("mailto:wegrzyn.simon@gmail.com"),
+                        onPressed: () => launchUrl(Uri(
+                            scheme: "mailto", path: "wegrzyn.simon@gmail.com")),
                         child: Column(
                           children: [
                             Icon(

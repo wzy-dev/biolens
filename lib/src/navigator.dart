@@ -1,15 +1,14 @@
 import 'package:biolens/shelf.dart';
-// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 
 class MyNavigator {
-  static onGenerateRoute({
+  static Route? onGenerateRoute({
     required BuildContext context,
     required RouteSettings settings,
   }) {
     late Widget childWidget;
     String? _routeName = settings.name?.replaceFirst("/link", "") ?? null;
-    print(settings.name);
+
     switch (_routeName) {
       case "/":
         childWidget = Homepage();
@@ -49,7 +48,7 @@ class MyNavigator {
           List<String> split = (_routeName ?? "").split("/");
           childWidget = ProductViewer(product: split[2]);
         } else {
-          childWidget = Homepage();
+          return null;
         }
         break;
     }
