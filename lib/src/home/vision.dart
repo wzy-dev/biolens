@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:biolens/models/shelf_models.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -130,13 +132,63 @@ class MyVision {
 
     Product? _result;
 
-    // On lance l'OCR sur l'image et on attend la réponse
+    // On prépare l'image pour l'analyse
     InputImage _inputImage = InputImage.fromFile(file);
+
+    // On commence par vérifier la présence d'un QRCode
+    final _qrcodeDetector =
+        GoogleMlKit.vision.barcodeScanner([BarcodeFormat.qrCode]);
+
+    final Product? _qrcodeProduct =
+        await _qrcodeDetector.processImage(_inputImage).then<Product?>((value) {
+      // Si aucun QRCode sur l'image
+      if (value.length == 0) return null;
+
+      // On stock le contenu du QRCode
+      String? _recognisedQrCodeLink = value[0].value.displayValue;
+
+      // Si le contenu est vide
+      if (_recognisedQrCodeLink == null) return null;
+
+      // On retourne un produit nul si le contenu du QRCode n'est pas un short link correct
+      RegExp _regExpIsABiolensShortLink =
+          RegExp(r"^https:\/\/biolens.page.link\/[a-zA-Z0-9]{4,}$");
+
+      if (!_regExpIsABiolensShortLink.hasMatch(_recognisedQrCodeLink))
+        return null;
+
+      // On récupère le long link associé au short link
+      return FirebaseDynamicLinks.instance
+          .getDynamicLink(Uri.parse(_recognisedQrCodeLink))
+          .then((value) {
+        Uri? longLink = value?.link;
+        if (longLink == null) return null;
+
+        // On retourne un produit nul si le long link n'est pas correct
+        RegExp _regExpIsABiolensLongLink =
+            RegExp(r"^https:\/\/biolens.app\/link\/product\/[a-zA-Z0-9]+$");
+
+        if (_regExpIsABiolensLongLink.hasMatch(longLink.toString())) {
+          // On retourne le produit ayant l'id du dernier segment du long link
+          return _productsEntity.firstWhere(
+              ((product) => product.id == value?.link.pathSegments.last));
+        }
+        return null;
+      });
+    });
+
+    // Si aucun produit n'a été trouvé dans le QRCode on test l'OCR
+    if (_qrcodeProduct != null) {
+      FirebaseAnalytics.instance
+          .logEvent(name: "to_scan", parameters: {"type": "QRCode"});
+      return _qrcodeProduct;
+    }
+
     final TextDetector _textDetector = GoogleMlKit.vision.textDetector();
     Future<RecognisedText> _recognisedText =
         _textDetector.processImage(_inputImage);
 
-    return _recognisedText.then((recognisedText) async {
+    return _recognisedText.then<Product?>((recognisedText) async {
       _result = _compareTo(
         recognisedText: recognisedText,
         listProducts: _productsEntity,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:biolens/models/shelf_models.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -59,7 +60,7 @@ class Product {
     names["indications"] = jsonDecode(names["indications"]);
     names["tags"] = jsonDecode(names["tags"]);
     jsonCopy["names"] = names;
-
+    inspect(_$ProductFromJson(jsonCopy));
     return _$ProductFromJson(jsonCopy);
   }
 

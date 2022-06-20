@@ -474,7 +474,7 @@ class _HomepageState extends State<Homepage> {
 
   void _toScan() {
     FirebaseAnalytics.instance
-        .logEvent(name: "to_scan", parameters: {"step": "loading"});
+        .logEvent(name: "to_scan", parameters: {"step": "try"});
 
     if (cacheDirectory == null) return;
 
@@ -685,6 +685,15 @@ class RepetitiveFailDialog extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      child: new Text(
+                        "N'oubliez pas que vous pouvez aussi scanner les codes QR générés dans l'onglet partage de l'application !",
+                        style: TextStyle(
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ],
                 ),

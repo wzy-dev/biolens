@@ -79,7 +79,7 @@ android {
         exclude 'lib/**/libdigitalink.so'
         exclude 'lib/**/libxeno_native.so'
         exclude 'lib/**/libmlkitcommonpipeline.so'
-        exclude 'lib/**/libbarhopper_v2.so'
+        // exclude 'lib/**/libbarhopper_v2.so'
         exclude 'lib/**/libclassifier_jni.so'
         exclude 'lib/**/libface_detector_v2_jni.so'
         exclude 'lib/**/libtensorflowlite_jni.so'

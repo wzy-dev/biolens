@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:biolens/models/shelf_models.dart';
 import 'package:biolens/shelf.dart';
@@ -9,12 +7,10 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -111,7 +107,6 @@ class _ProductViewerState extends State<ProductViewer> {
   late List<Tag> _listTagsCollection;
   late List<Product> _listProductsCollection;
   late Product? _product;
-  GlobalKey _renderObjectKey = GlobalKey();
   ScreenshotController screenshotController = ScreenshotController();
   bool _modalShareGeneration = false;
   bool _qrCodeGeneration = false;
@@ -134,29 +129,22 @@ class _ProductViewerState extends State<ProductViewer> {
     super.initState();
   }
 
+  // On écrit un fichier dans le répertoire donné
   Future<void> writeToFile(ByteData data, String path) async {
     final buffer = data.buffer;
     await File(path).writeAsBytes(
         buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
   }
 
-  Future<ByteData?> _getWidgetImage() async {
-    try {
-      RenderRepaintBoundary? boundary = _renderObjectKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary?;
-      final image = await boundary?.toImage();
-      return await image?.toByteData(format: ImageByteFormat.png);
-    } catch (exception) {
-      return null;
-    }
-  }
-
-  _shareQrCode(StateSetter setState) async {
+  // On ouvre la popup de partage système avec le grand QRCode
+  Future<void> _shareQrCode(StateSetter setState) async {
+    // On récupère le répertoire de sauvegarde des fichiers
     Directory tempDir = await getTemporaryDirectory();
     String tempPath = tempDir.path;
     final ts = DateTime.now().millisecondsSinceEpoch.toString();
-    String path = '$tempPath/$ts.png';
-    // final ByteData? picData = await _getWidgetImage();
+    String path = "$tempPath/biolenscode$ts.png";
+
+    // On génère le grand QRCode dans une MaterialApp masquée dans la plus grande dimension possible
     final ByteData? picData =
         ByteData.sublistView(await screenshotController.captureFromWidget(
       Container(
@@ -182,14 +170,20 @@ class _ProductViewerState extends State<ProductViewer> {
         ),
       ),
     ));
+
+    // On ouvre la popup de partage système avec le deep link
     if (picData != null) {
       await writeToFile(picData, path);
 
+      // On ouvre la popup de partage système
       await Share.shareFiles(
         [path],
         mimeTypes: ["image/png"],
         subject: 'biolens - ${_product?.name ?? 404}',
       );
+
+      FirebaseAnalytics.instance
+          .logEvent(name: "share", parameters: {"type": "QRCode"});
 
       setState(() {
         _qrCodeGeneration = false;
@@ -197,11 +191,16 @@ class _ProductViewerState extends State<ProductViewer> {
     }
   }
 
-  _shareLink() async {
+  // On partage
+  Future<void> _shareLink() async {
+    // On ouvre la popup de partage système
     await Share.share(
       await _generateLink(),
       subject: 'biolens - ${_product?.name ?? 404}',
     );
+
+    FirebaseAnalytics.instance
+        .logEvent(name: "share", parameters: {"type": "link"});
   }
 
   Future<String> _generateLink() async {
@@ -209,11 +208,13 @@ class _ProductViewerState extends State<ProductViewer> {
       link: Uri.parse("https://biolens.app/link/product/${_product?.id}"),
       uriPrefix: "https://biolens.page.link",
       androidParameters: const AndroidParameters(
-          packageName: "com.polymathe.biolens", minimumVersion: 20),
+        packageName: "com.polymathe.biolens",
+        minimumVersion: 21,
+      ),
       iosParameters: const IOSParameters(
         bundleId: "com.polymathe.biolens",
         appStoreId: "1600484395", // dont work in simulator
-        minimumVersion: "20",
+        minimumVersion: "21",
       ),
       socialMetaTagParameters: SocialMetaTagParameters(
         title: "biolens - ${_product?.name ?? 404}",
@@ -232,30 +233,30 @@ class _ProductViewerState extends State<ProductViewer> {
   }
 
   _drawShareModal() async {
+    // On empêche d'ouvrir plusieurs modals de partage
     setState(() {
       _modalShareGeneration = true;
     });
-    print("draw");
-    final RepaintBoundary qrcode = RepaintBoundary(
-      key: _renderObjectKey,
-      child: Container(
-        decoration: BoxDecoration(
-            color: CupertinoColors.white,
-            borderRadius: BorderRadius.all(Radius.circular(16))),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: PrettyQr(
-            elementColor: CupertinoTheme.of(context).primaryColor,
-            size: 150,
-            data: await _generateLink(),
-            errorCorrectLevel: QrErrorCorrectLevel.Q,
-            roundEdges: true,
-            image: AssetImage("assets/qr_code_logo.png"),
-          ),
+
+    // On génére le petit QRCode
+    final Container _smallQRCode = Container(
+      decoration: BoxDecoration(
+          color: CupertinoColors.white,
+          borderRadius: BorderRadius.all(Radius.circular(16))),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: PrettyQr(
+          elementColor: CupertinoTheme.of(context).primaryColor,
+          size: 150,
+          data: await _generateLink(),
+          errorCorrectLevel: QrErrorCorrectLevel.Q,
+          roundEdges: true,
+          image: AssetImage("assets/qr_code_logo.png"),
         ),
       ),
     );
 
+    // On affiche la modal de partage
     showModalBottomSheet(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -305,7 +306,7 @@ class _ProductViewerState extends State<ProductViewer> {
                         children: [
                           CupertinoButton(
                             child: Stack(children: [
-                              qrcode,
+                              _smallQRCode,
                               _qrCodeGeneration
                                   ? Positioned.fill(
                                       child: Container(
@@ -321,6 +322,7 @@ class _ProductViewerState extends State<ProductViewer> {
                             onPressed: _qrCodeGeneration
                                 ? null
                                 : () {
+                                    // On empêche la génération simultanée de plusieurs grands QRCodes et on déclenche le loader
                                     setState(() {
                                       _qrCodeGeneration = true;
                                     });
@@ -1162,13 +1164,6 @@ class GradientList extends StatelessWidget {
               ),
             ),
           ),
-          // child: Text(
-          //   "• " + element,
-          //   style: TextStyle(
-          //     color: Color.fromRGBO(60, 60, 60, 1),
-          //     fontSize: 16,
-          //   ),
-          // ),
         ),
       );
     });

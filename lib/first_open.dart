@@ -624,6 +624,11 @@ class ContentTutorialSecond extends StatelessWidget {
                         ),
                       ],
                     ),
+                    SizedBox(height: 15),
+                    Text(
+                      "N'oubliez pas que vous pouvez aussi scanner les codes QR générés dans l'onglet partage de l'application !",
+                      style: textStyle,
+                    ),
                   ],
                 ),
               ),
